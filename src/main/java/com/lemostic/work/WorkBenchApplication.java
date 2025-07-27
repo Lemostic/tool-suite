@@ -2,8 +2,11 @@ package com.lemostic.work;
 
 import com.dlsc.workbenchfx.Workbench;
 import com.dlsc.workbenchfx.view.controls.ToolbarItem;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import com.lemostic.work.controls.*;
 import com.lemostic.work.modules.datamigrator.DataMigrateModule;
+import com.lemostic.work.modules.deployment.PackageDeploymentModule;
 import com.lemostic.work.modules.preferences.Preferences;
 import com.lemostic.work.modules.preferences.PreferencesModule;
 import fr.brouillard.oss.cssfx.CSSFX;
@@ -16,10 +19,12 @@ import javafx.stage.Stage;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.materialdesign.MaterialDesign;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WorkBenchApplication extends Application {
 
-
+    private static final Logger logger = LoggerFactory.getLogger(WorkBenchApplication.class);
     private Workbench workbench;
     private Preferences preferences;
 
@@ -27,15 +32,20 @@ public class WorkBenchApplication extends Application {
 
     private DataMigrateModule dataMigrateModule;
 
+    private PackageDeploymentModule packageDeploymentModule;
+
     public static void main(String[] args) {
         launch(args);
     }
 
     @Override
     public void start(Stage primaryStage) {
+        logger.info("应用启动中...");
+
         preferences = new Preferences();
         preferencesModule = new PreferencesModule(preferences);
         dataMigrateModule = new DataMigrateModule();
+        packageDeploymentModule = new PackageDeploymentModule();
 
         Scene myScene = new Scene(initWorkbench());
 
@@ -54,6 +64,7 @@ public class WorkBenchApplication extends Application {
     private Workbench initWorkbench() {
         // Navigation Drawer
         MenuItem dataMigrateMenuItem = new MenuItem("数据迁移", createIcon(MaterialDesign.MDI_TRANSFER));
+        MenuItem packageDeploymentMenuItem = new MenuItem("包部署", createIcon(MaterialDesign.MDI_CLOUD_UPLOAD));
 
         MenuItem showOverlay = new MenuItem("Show overlay");
         MenuItem showBlockingOverlay = new MenuItem("Show blocking overlay");
@@ -68,6 +79,7 @@ public class WorkBenchApplication extends Application {
         // WorkbenchFX
         workbench = Workbench.builder(
                         dataMigrateModule,
+                        packageDeploymentModule,
                         preferencesModule
                 )
                 .toolbarLeft(
@@ -92,7 +104,7 @@ public class WorkBenchApplication extends Application {
                 .tileFactory(CustomTile::new)
                 .navigationDrawer(new CustomNavigationDrawer())
                 .navigationDrawerItems(
-                        dataMigrateMenuItem, showOverlay, showBlockingOverlay, settingsMenuItem)
+                        dataMigrateMenuItem, packageDeploymentMenuItem, showOverlay, showBlockingOverlay, settingsMenuItem)
                 .build();
 
 
@@ -106,6 +118,13 @@ public class WorkBenchApplication extends Application {
             workbench.hideDrawer();
             workbench.openModule(dataMigrateModule);
         });
+
+        // 包部署菜单点击处理
+        packageDeploymentMenuItem.setOnAction(event -> {
+            workbench.hideDrawer();
+            workbench.openModule(packageDeploymentModule);
+        });
+
         settingsMenuItem.setOnAction(event -> {
             workbench.hideDrawer();
             workbench.openModule(preferencesModule);
