@@ -61,6 +61,9 @@ public class WorkBenchApplication extends Application {
     @Override
     public void stop() {
         logger.info("应用关闭中...");
+        
+        // 销毁 SPI 提供者
+        io.github.lemostic.toolsuite.core.ModuleLoader.destroySpiProviders();
 
         logger.info("应用已关闭");
     }

@@ -1,115 +1,108 @@
 package io.github.lemostic.toolsuite.core;
 
 import com.dlsc.workbenchfx.model.WorkbenchModule;
+import io.github.lemostic.toolsuite.core.module.ModuleRegistry;
+import io.github.lemostic.toolsuite.core.spi.SpiModuleLoader;
 import io.github.lemostic.toolsuite.modules.preferences.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 模块加载器 - 自动扫描并加载工具模块
+ * 模块加载器 - 支持双模式加载
+ * 
+ * 加载模式：
+ * 1. 内置模块：通过 ModuleRegistry 注册的模块
+ * 2. SPI 插件：通过 Java SPI 机制动态发现的模块
+ * 
+ * 新架构使用方式：
+ * 1. 内置模块：在 registerModules() 中注册
+ * 2. SPI 插件：实现 ToolModuleProvider 接口，放入 classpath
  */
 public class ModuleLoader {
     
     private static final Logger logger = LoggerFactory.getLogger(ModuleLoader.class);
     
-    // 模块包扫描路径
-    private static final String MODULE_PACKAGE = "io.github.lemostic.toolsuite.modules";
+    /**
+     * 注册所有内置模块
+     * 新增内置模块只需在此处添加注册即可
+     */
+    public static void registerModules() {
+        logger.info("开始注册内置模块...");
+        
+        // ==================== 系统管理类 ====================
+        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.preferences.PreferencesModule.class);
+        
+        // ==================== 开发工具类 ====================
+        // HelloWorldModule 已改为通过 SPI 加载，见 BuiltinDevToolsProvider
+        // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.helloworld.HelloWorldModule.class);
+        
+        // ==================== 数据库工具类 ====================
+        // 未来添加：
+        // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.database.mysql.MySQLClientModule.class);
+        // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.database.redis.RedisClientModule.class);
+        
+        // ==================== 数据处理类 ====================
+        // 未来添加：
+        // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.data.DataMigrateModule.class);
+        
+        // ==================== 运维工具类 ====================
+        // 未来添加：
+        // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.devops.PackageDeploymentModule.class);
+        
+        // ==================== 网络工具类 ====================
+        // 未来添加：
+        // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.network.HttpClientModule.class);
+        
+        logger.info("内置模块注册完成，共注册 {} 个模块", ModuleRegistry.getRegisteredModules().size());
+    }
     
     /**
-     * 加载所有模块
+     * 加载所有 SPI 插件模块
+     */
+    public static void loadSpiModules() {
+        logger.info("开始加载 SPI 插件...");
+        
+        // 1. 扫描并加载 SPI 提供者
+        SpiModuleLoader.loadProviders();
+        
+        // 2. 获取所有 SPI 模块并注册到注册表
+        List<Class<? extends WorkbenchModule>> spiModules = SpiModuleLoader.getAllSpiModules();
+        for (Class<? extends WorkbenchModule> moduleClass : spiModules) {
+            ModuleRegistry.register(moduleClass);
+        }
+        
+        logger.info("SPI 插件加载完成，共加载 {} 个模块", spiModules.size());
+    }
+    
+    /**
+     * 加载所有模块（内置 + SPI）
      * @param preferences 偏好设置（某些模块需要）
      * @return 模块列表
      */
     public static List<WorkbenchModule> loadModules(Preferences preferences) {
-        List<WorkbenchModule> modules = new ArrayList<>();
+        logger.info("开始加载所有模块...");
         
-        // 定义需要加载的模块类（避免使用反射扫描，明确声明更可靠）
-        List<ModuleConfig> moduleConfigs = getModuleConfigs();
-        
-        for (ModuleConfig config : moduleConfigs) {
-            try {
-                WorkbenchModule module = createModule(config, preferences);
-                if (module != null) {
-                    modules.add(module);
-                    logger.info("成功加载模块: {}", module.getName());
-                }
-            } catch (Exception e) {
-                logger.error("加载模块失败: {}", config.className, e);
-            }
+        // 1. 注册内置模块
+        if (ModuleRegistry.getRegisteredModules().isEmpty()) {
+            registerModules();
         }
         
-        logger.info("共加载 {} 个模块", modules.size());
+        // 2. 加载 SPI 插件模块
+        loadSpiModules();
+        
+        // 3. 从注册表加载所有模块（内置 + SPI）
+        List<WorkbenchModule> modules = ModuleRegistry.loadAllModules(preferences);
+        
+        logger.info("所有模块加载完成，共 {} 个模块", modules.size());
         return modules;
     }
     
     /**
-     * 创建模块实例
+     * 销毁所有 SPI 提供者
      */
-    private static WorkbenchModule createModule(ModuleConfig config, Preferences preferences) throws Exception {
-        Class<?> clazz = Class.forName(config.className);
-        
-        // 尝试带 Preferences 参数的构造器
-        if (config.requiresPreferences) {
-            try {
-                Constructor<?> constructor = clazz.getConstructor(Preferences.class);
-                return (WorkbenchModule) constructor.newInstance(preferences);
-            } catch (NoSuchMethodException e) {
-                logger.warn("模块 {} 配置为需要 Preferences，但未找到对应构造函数，尝试使用无参构造", config.className);
-            }
-        }
-        
-        // 尝试无参构造器
-        Constructor<?> constructor = clazz.getConstructor();
-        return (WorkbenchModule) constructor.newInstance();
-    }
-    
-    /**
-     * 获取模块配置列表
-     * 新增模块只需在此处添加配置即可
-     */
-    private static List<ModuleConfig> getModuleConfigs() {
-        List<ModuleConfig> configs = new ArrayList<>();
-        
-        // 添加模块配置 - 新增模块只需在此处添加一行即可
-        configs.add(ModuleConfig.of(io.github.lemostic.toolsuite.modules.helloworld.HelloWorldModule.class));
-        configs.add(ModuleConfig.of(io.github.lemostic.toolsuite.modules.preferences.PreferencesModule.class, true));
-        // 未来新增模块示例：
-        // configs.add(ModuleConfig.of(io.github.lemostic.toolsuite.modules.datamigrator.DataMigrateModule.class, true));
-        // configs.add(ModuleConfig.of(io.github.lemostic.toolsuite.modules.deployment.PackageDeploymentModule.class, true));
-        
-        return configs;
-    }
-    
-    /**
-     * 模块配置类
-     */
-    private static class ModuleConfig {
-        String className;
-        boolean requiresPreferences;
-
-        private ModuleConfig(String className, boolean requiresPreferences) {
-            this.className = className;
-            this.requiresPreferences = requiresPreferences;
-        }
-        
-        /**
-         * 创建不需要 Preferences 参数的模块配置
-         */
-        static ModuleConfig of(Class<? extends WorkbenchModule> moduleClass) {
-            return new ModuleConfig(moduleClass.getName(), false);
-        }
-        
-        /**
-         * 创建模块配置
-         * @param moduleClass 模块类
-         * @param requiresPreferences 是否需要 Preferences 参数
-         */
-        static ModuleConfig of(Class<? extends WorkbenchModule> moduleClass, boolean requiresPreferences) {
-            return new ModuleConfig(moduleClass.getName(), requiresPreferences);
-        }
+    public static void destroySpiProviders() {
+        SpiModuleLoader.destroyProviders();
     }
 }

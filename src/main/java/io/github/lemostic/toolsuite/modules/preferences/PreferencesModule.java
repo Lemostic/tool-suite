@@ -2,12 +2,23 @@ package io.github.lemostic.toolsuite.modules.preferences;
 
 import com.dlsc.workbenchfx.model.WorkbenchModule;
 import com.dlsc.workbenchfx.view.controls.ToolbarItem;
+import io.github.lemostic.toolsuite.core.module.ModuleCategory;
+import io.github.lemostic.toolsuite.core.module.ToolModule;
 import javafx.scene.Node;
 import javafx.scene.control.ButtonType;
 import org.kordamp.ikonli.fontawesome.FontAwesome;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.materialdesign.MaterialDesign;
 
+@ToolModule(
+    name = "Preferences",
+    category = ModuleCategory.SYSTEM,
+    description = "系统偏好设置管理",
+    version = "1.0.0",
+    author = "lemostic",
+    requiresPreferences = true,
+    priority = 1  // 系统模块，高优先级
+)
 public class PreferencesModule extends WorkbenchModule {
 
   Preferences preferences;

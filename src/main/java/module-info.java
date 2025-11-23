@@ -30,6 +30,15 @@ module ToolSuite {
 
     exports io.github.lemostic.toolsuite;
     exports io.github.lemostic.toolsuite.core;
+    exports io.github.lemostic.toolsuite.core.module;
+    exports io.github.lemostic.toolsuite.core.spi;  // 导出 SPI 接口供外部插件使用
+    
+    // 声明 SPI 服务接口
+    uses io.github.lemostic.toolsuite.core.spi.ToolModuleProvider;
+    
+    // 提供 SPI 实现（内置插件）
+    provides io.github.lemostic.toolsuite.core.spi.ToolModuleProvider 
+        with io.github.lemostic.toolsuite.modules.devtools.BuiltinDevToolsProvider;
 
     // 开放包给JavaFX进行反射访问
     opens io.github.lemostic.toolsuite to javafx.fxml;
