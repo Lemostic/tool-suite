@@ -5,12 +5,12 @@
              http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
              version="2.0">
 
-    <persistence-unit name="workbench-pu" transaction-type="RESOURCE_LOCAL">
+    <persistence-unit name="ToolSuitePU" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         
         <!-- 实体类 -->
-        <class>com.lemostic.work.database.entity.ServerConfigurationEntity</class>
-        <class>com.lemostic.work.database.entity.DeploymentHistoryEntity</class>
+        <class>io.github.lemostic.toolsuite.database.entity.ServerConfigurationEntity</class>
+        <class>io.github.lemostic.toolsuite.database.entity.DeploymentHistoryEntity</class>
         
         <properties>
             <!-- 这些属性将在代码中动态设置 -->
