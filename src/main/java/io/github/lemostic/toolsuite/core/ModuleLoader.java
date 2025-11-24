@@ -38,6 +38,9 @@ public class ModuleLoader {
         // HelloWorldModule 已改为通过 SPI 加载，见 BuiltinDevToolsProvider
         // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.helloworld.HelloWorldModule.class);
         
+        // ==================== 文件工具类 ====================
+        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.file.zipclean.ZipCleanModule.class);
+        
         // ==================== 数据库工具类 ====================
         // 未来添加：
         // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.database.mysql.MySQLClientModule.class);

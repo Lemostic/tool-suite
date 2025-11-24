@@ -45,5 +45,6 @@ module ToolSuite {
     opens io.github.lemostic.toolsuite.modules.preferences to javafx.fxml;
 
     opens io.github.lemostic.toolsuite.modules.helloworld to javafx.fxml;
+    opens io.github.lemostic.toolsuite.modules.file.zipclean to javafx.fxml, javafx.base;
 
 }
