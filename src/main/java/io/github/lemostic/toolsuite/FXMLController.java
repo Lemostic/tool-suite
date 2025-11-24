@@ -1,4 +1,4 @@
-package io.github.lemostic.toolsuite.toolsuite;
+package io.github.lemostic.toolsuite;
 
 import com.dlsc.workbenchfx.Workbench;
 import io.github.lemostic.toolsuite.modules.helloworld.HelloWorldModule;
