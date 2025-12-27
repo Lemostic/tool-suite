@@ -577,7 +577,16 @@ public class EsQueryView extends BorderPane {
         
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("导出Excel文件");
-        fileChooser.setInitialFileName("es_export.xlsx");
+        
+        // 生成带索引名和时间戳的文件名
+        String indexName = indexCombo.getValue();
+        if (indexName == null || indexName.isEmpty()) {
+            indexName = "unknown";
+        }
+        String timestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String fileName = String.format("es_export_%s_%s.xlsx", indexName, timestamp);
+        
+        fileChooser.setInitialFileName(fileName);
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("Excel Files", "*.xlsx")
         );
