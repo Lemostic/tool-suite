@@ -18,6 +18,8 @@ import org.kordamp.ikonli.materialdesign.MaterialDesign;
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
 
+import io.github.lemostic.toolsuite.util.ResourceLoader;
+
 public class ExcelToJSONView extends BorderPane {
 
     private final ExcelToJSONService service = new ExcelToJSONService();
@@ -416,31 +418,7 @@ public class ExcelToJSONView extends BorderPane {
         alert.setTitle("使用说明");
         alert.setHeaderText("Excel转JSON工具 - 使用指南");
         
-        String help = """
-        🔍 功能说明:
-        本工具用于将Excel文件转换为JSON数组格式，支持批量处理大量数据。
-        
-        🔧 使用步骤:
-        1. 拖拽Excel文件(.xlsx或.xls)到指定区域，或点击"选择Excel文件"按钮
-        2. 从下拉列表中选择要转换的工作表
-        3. 根据需要勾选"首行为列标题"和"格式化JSON"选项
-        4. 点击"转换为JSON"按钮开始转换
-        5. 转换完成后，JSON数据将显示在下方文本区域
-        6. 可以点击"复制JSON"按钮将结果复制到剪贴板，或点击"保存JSON"按钮保存到文件
-        
-        ⚙️ 选项说明:
-        • 首行为列标题：勾选此项将把Excel的第一行作为JSON对象的键名
-        • 格式化JSON：勾选此项将美化输出的JSON格式，便于阅读
-        • 支持转换大量数据（万条级别）
-        • 转换过程在后台线程进行，不会阻塞UI
-        
-        📝 注意事项:
-        • 支持.xlsx和.xls格式的Excel文件
-        • 支持多工作表Excel文件，可选择特定工作表进行转换
-        • 大文件转换可能需要一些时间，请耐心等待
-        • 转换结果会保留原始数据类型（字符串、数字、布尔值等）
-        • 空单元格将转换为null值
-        """;
+        String help = ResourceLoader.loadResourceFileForClass(getClass(), "help.txt");
         
         TextArea textArea = new TextArea(help);
         textArea.setEditable(false);
@@ -456,12 +434,8 @@ public class ExcelToJSONView extends BorderPane {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("关于");
         alert.setHeaderText("Excel转JSON工具");
-        alert.setContentText(
-            "版本: 2.0.0\n" +
-            "作者: Tool Suite\n" +
-            "功能: 将Excel数据转换为JSON数组格式，支持批量处理\n\n" +
-            "© 2025 Tool Suite"
-        );
+        String about = ResourceLoader.loadResourceFileForClass(getClass(), "about.txt");
+        alert.setContentText(about);
         alert.showAndWait();
     }
 

@@ -1,0 +1,6 @@
+HelloWorld模块
+版本: 1.0.0
+作者: Tool Suite
+功能: 演示基本模块结构
+
+© 2025 Tool Suite

@@ -16,6 +16,7 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.materialdesign.MaterialDesign;
+import io.github.lemostic.toolsuite.util.ResourceLoader;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -568,32 +569,7 @@ public class ZipCleanView extends BorderPane {
         alert.setTitle("使用说明");
         alert.setHeaderText("压缩包清理工具 - 使用指南");
         
-        String help = """
-        📦 功能说明:
-        本工具用于清理压缩包中不需要的文件，特别适用于 Jenkins 构建包清理。
-        
-        🔧 使用步骤:
-        1. 选择要清理的压缩包文件（支持 .zip, .jar, .war）
-        2. 配置清理规则（支持正则表达式）
-        3. 点击\"预览\"查看将要删除的文件
-        4. 确认无误后点击\"开始清理\"
-        
-        📝 规则说明:
-        • 正则表达式: 使用 Java 正则语法匹配文件路径
-        • 简单模式: 使用包含匹配（contains）
-        • 路径分隔符: 统一使用 / （不是 \\）
-        
-        💡 示例规则:
-        • ^mdm/.*              删除 mdm 目录下所有文件
-        • ^lib/(?!mdm-).*\\.jar$  保留 lib 下 mdm- 开头的 jar
-        • \\.log$              删除所有 .log 文件
-        • ^config/.*\\.bak$     删除 config 目录下的 .bak 文件
-        
-        ⚠️ 注意事项:
-        • 原文件不会被修改，会生成新的清理后的文件
-        • 建议先使用\"预览\"功能确认删除列表
-        • 支持的文件格式: ZIP, JAR, WAR
-        """;
+        String help = ResourceLoader.loadResourceFileForClass(getClass(), "help.txt");
         
         TextArea textArea = new TextArea(help);
         textArea.setEditable(false);
@@ -609,12 +585,7 @@ public class ZipCleanView extends BorderPane {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("关于");
         alert.setHeaderText("压缩包清理工具");
-        alert.setContentText(
-            "版本: 1.0.0\n" +
-            "作者: lemostic\n" +
-            "功能: 智能清理压缩包中的无用文件\n\n" +
-            "© 2025 Tool Suite"
-        );
+        alert.setContentText(ResourceLoader.loadResourceFileForClass(getClass(), "about.txt"));
         alert.showAndWait();
     }
     

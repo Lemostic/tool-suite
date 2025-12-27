@@ -1,0 +1,5 @@
+版本: 2.0.0
+作者: Tool Suite
+功能: 将Excel数据转换为JSON数组格式，支持批量处理
+
+© 2025 Tool Suite
