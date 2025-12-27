@@ -3,6 +3,7 @@ package io.github.lemostic.toolsuite.modules.devtools;
 import com.dlsc.workbenchfx.model.WorkbenchModule;
 import io.github.lemostic.toolsuite.core.spi.ToolModuleProvider;
 import io.github.lemostic.toolsuite.modules.helloworld.HelloWorldModule;
+import io.github.lemostic.toolsuite.modules.search.es.EsQueryModule;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,7 +19,8 @@ public class BuiltinDevToolsProvider implements ToolModuleProvider {
     @Override
     public List<Class<? extends WorkbenchModule>> getModuleClasses() {
         return Arrays.asList(
-            HelloWorldModule.class
+            HelloWorldModule.class,
+            EsQueryModule.class
             // 未来可以添加更多开发工具模块
             // JsonFormatterModule.class,
             // Base64EncoderModule.class,

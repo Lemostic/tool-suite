@@ -27,6 +27,12 @@ module ToolSuite {
     requires jakarta.persistence;
     requires jakarta.xml.bind;
     requires org.hibernate.orm.core;
+    
+    // ES查询模块相关
+    requires java.net.http;
+    requires com.fasterxml.jackson.databind;
+    requires org.apache.poi.poi;
+    requires org.apache.poi.ooxml;
 
     exports io.github.lemostic.toolsuite;
     exports io.github.lemostic.toolsuite.core;
@@ -46,5 +52,6 @@ module ToolSuite {
 
     opens io.github.lemostic.toolsuite.modules.helloworld to javafx.fxml;
     opens io.github.lemostic.toolsuite.modules.file.zipclean to javafx.fxml, javafx.base;
+    opens io.github.lemostic.toolsuite.modules.search.es to javafx.fxml, javafx.base;
 
 }
