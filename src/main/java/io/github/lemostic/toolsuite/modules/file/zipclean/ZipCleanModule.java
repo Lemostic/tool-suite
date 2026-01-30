@@ -13,6 +13,8 @@ import org.kordamp.ikonli.materialdesign.MaterialDesign;
 @ToolModule(
     name = "压缩包清理工具",
     category = ModuleCategory.FILE_TOOLS,
+    menuGroup = "文件工具",
+    menuGroupOrder = 20,
     description = "智能清理压缩包中的无用文件，支持正则表达式过滤",
     version = "1.0.0",
     author = "lemostic",

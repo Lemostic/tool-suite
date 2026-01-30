@@ -5,12 +5,14 @@ import com.dlsc.workbenchfx.model.WorkbenchModule;
 import com.dlsc.workbenchfx.view.controls.ToolbarItem;
 import io.github.lemostic.toolsuite.controls.*;
 import io.github.lemostic.toolsuite.core.ModuleLoader;
+import io.github.lemostic.toolsuite.core.module.ModuleRegistry;
 import io.github.lemostic.toolsuite.modules.preferences.Preferences;
 import fr.brouillard.oss.cssfx.CSSFX;
 import javafx.application.Application;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.Ikon;
@@ -69,42 +71,59 @@ public class WorkBenchApplication extends Application {
     }
 
     private Workbench initWorkbench() {
-        // Navigation Drawer
-        MenuItem showOverlay = new MenuItem("Show overlay");
-        MenuItem showBlockingOverlay = new MenuItem("Show blocking overlay");
+        int modulesPerPage = Math.max(6, Math.min(24, preferences.getModulesPerPage()));
 
-        // 动态创建导航项
-        List<MenuItem> drawerItems = new ArrayList<>();
-        // 追加覆盖层项
-        drawerItems.add(showOverlay);
-        drawerItems.add(showBlockingOverlay);
-
-        // WorkbenchFX
         workbench = Workbench.builder(
                         modules.toArray(new WorkbenchModule[0])
                 )
-                .toolbarLeft(
-                        new ToolbarItem("WorkbenchFX")
-                )
-                .modulesPerPage(9)
+                .toolbarLeft(new ToolbarItem("数据治理工具"))
+                .modulesPerPage(modulesPerPage)
                 .pageFactory(CustomPage::new)
                 .tabFactory(CustomTab::new)
                 .tileFactory(CustomTile::new)
                 .navigationDrawer(new CustomNavigationDrawer())
-                .navigationDrawerItems(drawerItems.toArray(new MenuItem[0]))
+                .navigationDrawerItems(new MenuItem[0])
                 .build();
 
+        // 根据插件列表自动生成左侧抽屉菜单树（按 @ToolModule 的 menuGroup/category 分组）
+        List<MenuItem> drawerItems = buildDrawerItemsFromModules(workbench, modules);
+        // MenuItem showOverlay = new MenuItem("显示覆盖层");
+        // MenuItem showBlockingOverlay = new MenuItem("显示阻塞覆盖层");
+        // drawerItems.add(showOverlay);
+        // drawerItems.add(showBlockingOverlay);
+        workbench.getNavigationDrawer().getItems().addAll(drawerItems);
 
-        CustomOverlay customOverlay = new CustomOverlay(workbench, false);
-        CustomOverlay blockingCustomOverlay = new CustomOverlay(workbench, true);
-        showOverlay.setOnAction(event -> workbench.showOverlay(customOverlay, false));
-        showBlockingOverlay.setOnAction(event -> workbench.showOverlay(blockingCustomOverlay, true));
+        // CustomOverlay customOverlay = new CustomOverlay(workbench, false);
+        // CustomOverlay blockingCustomOverlay = new CustomOverlay(workbench, true);
+        // showOverlay.setOnAction(event -> workbench.showOverlay(customOverlay, false));
+        // showBlockingOverlay.setOnAction(event -> workbench.showOverlay(blockingCustomOverlay, true));
 
 
         workbench.getStylesheets().add(WorkBenchApplication.class.getResource("customTheme.css").toExternalForm());
         workbench.getStylesheets().add(WorkBenchApplication.class.getResource("customOverlay.css").toExternalForm());
 
         return workbench;
+    }
+
+    /**
+     * 根据已加载的模块列表，按 @ToolModule 的 menuGroup/category 分组生成左侧抽屉菜单树。
+     * 每个分组对应一个 Menu（子菜单），其下为可点击打开对应模块的 MenuItem。
+     */
+    private List<MenuItem> buildDrawerItemsFromModules(Workbench workbench, List<WorkbenchModule> modules) {
+        List<MenuItem> result = new ArrayList<>();
+        for (ModuleRegistry.GroupedModules group : ModuleRegistry.getGroupedModulesForDrawer(modules)) {
+            Menu menu = new Menu(group.getGroupName());
+            for (WorkbenchModule module : group.getModules()) {
+                MenuItem item = new MenuItem(module.getName(), (Node) module.getIcon());
+                item.setOnAction(e -> {
+                    workbench.openModule(module);
+                    workbench.hideNavigationDrawer();
+                });
+                menu.getItems().add(item);
+            }
+            result.add(menu);
+        }
+        return result;
     }
 
     private Node createIcon(Ikon icon) {

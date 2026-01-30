@@ -13,6 +13,8 @@ import org.kordamp.ikonli.materialdesign.MaterialDesign;
 @ToolModule(
     name = "ES数据查询",
     category = ModuleCategory.SEARCH_ENGINE,
+    menuGroup = "搜索引擎",
+    menuGroupOrder = 50,
     description = "连接Elasticsearch执行查询，支持字段搜索、列筛选和Excel导出",
     version = "1.0.0",
     author = "lemostic",

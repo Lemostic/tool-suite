@@ -13,11 +13,13 @@ import org.kordamp.ikonli.materialdesign.MaterialDesign;
 @ToolModule(
     name = "Preferences",
     category = ModuleCategory.SYSTEM,
-    description = "系统偏好设置管理",
+    menuGroup = "系统",
+    menuGroupOrder = 1,
+    description = "系统偏好设置与 Workbench 布局配置",
     version = "1.0.0",
     author = "lemostic",
     requiresPreferences = true,
-    priority = 1  // 系统模块，高优先级
+    priority = 1
 )
 public class PreferencesModule extends WorkbenchModule {
 

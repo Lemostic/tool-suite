@@ -61,6 +61,11 @@ public class Preferences {
     IntegerProperty customControlProperty = new SimpleIntegerProperty(42);
     IntegerField customControl = setupCustomControl();
 
+    // WorkbenchFX 相关
+    IntegerProperty modulesPerPage = new SimpleIntegerProperty(9);
+    BooleanProperty drawerOverlay = new SimpleBooleanProperty(false);
+    BooleanProperty toolbarLeft = new SimpleBooleanProperty(true);
+
     public Preferences() {
         preferencesFx = createPreferences();
     }
@@ -102,6 +107,15 @@ public class Preferences {
                 Category.of("Favorites",
                         Setting.of("Favorites", favoritesItems, favoritesSelection),
                         Setting.of("Favorite Number", customControl, customControlProperty)
+                ),
+                Category.of("Workbench",
+                        Group.of("布局与外观",
+                                Setting.of("每页模块数量", modulesPerPage, 6, 24)
+                        ).description("重启或重新打开模块列表后生效"),
+                        Group.of("抽屉与工具栏",
+                                Setting.of("抽屉以覆盖层显示", drawerOverlay),
+                                Setting.of("工具栏靠左", toolbarLeft)
+                        ).description("部分选项需重启应用生效")
                 )
         ).persistWindowState(false).saveSettings(true).debugHistoryMode(false).buttonsVisibility(true);
     }
@@ -124,5 +138,29 @@ public class Preferences {
 
     public boolean isNightMode() {
         return nightMode.get();
+    }
+
+    public int getModulesPerPage() {
+        return modulesPerPage.get();
+    }
+
+    public IntegerProperty modulesPerPageProperty() {
+        return modulesPerPage;
+    }
+
+    public boolean isDrawerOverlay() {
+        return drawerOverlay.get();
+    }
+
+    public BooleanProperty drawerOverlayProperty() {
+        return drawerOverlay;
+    }
+
+    public boolean isToolbarLeft() {
+        return toolbarLeft.get();
+    }
+
+    public BooleanProperty toolbarLeftProperty() {
+        return toolbarLeft;
     }
 }

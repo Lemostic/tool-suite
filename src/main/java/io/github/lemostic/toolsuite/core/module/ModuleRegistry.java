@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 /**
  * 模块注册表 - 统一管理所有工具模块
- * 支持注解驱动的模块自动发现和加载
+ * 支持注解驱动的模块自动发现和加载，以及按菜单分组生成抽屉树
  */
 public class ModuleRegistry {
     
@@ -148,6 +148,52 @@ public class ModuleRegistry {
         }
     }
     
+    /**
+     * 按菜单分组整理模块，供左侧抽屉生成分组树。
+     * 分组名：注解中 menuGroup 非空用 menuGroup，否则用 category 的显示名。
+     * 分组顺序：按 menuGroupOrder 升序，同组内保持传入的 modules 顺序。
+     *
+     * @param modules 已加载的模块实例列表
+     * @return 有序的「分组名 + 该组模块列表」，可直接用于构建 Menu(MenuItem)
+     */
+    public static List<GroupedModules> getGroupedModulesForDrawer(List<WorkbenchModule> modules) {
+        if (modules == null || modules.isEmpty()) {
+            return Collections.emptyList();
+        }
+        Map<String, GroupedModules> groupMap = new LinkedHashMap<>();
+        for (WorkbenchModule module : modules) {
+            ToolModule ann = module.getClass().getAnnotation(ToolModule.class);
+            String groupName = (ann != null && ann.menuGroup() != null && !ann.menuGroup().isEmpty())
+                    ? ann.menuGroup()
+                    : (ann != null ? ann.category().getDisplayName() : "其他");
+            int groupOrder = ann != null ? ann.menuGroupOrder() : 100;
+            GroupedModules g = groupMap.computeIfAbsent(groupName, k -> new GroupedModules(groupName, groupOrder, new ArrayList<>()));
+        g.getModules().add(module);
+        }
+        List<GroupedModules> result = new ArrayList<>(groupMap.values());
+        result.sort(Comparator.comparingInt(GroupedModules::getGroupOrder));
+        return result;
+    }
+
+    /**
+     * 左侧抽屉用：一个菜单分组（显示名 + 排序权重 + 该组下的模块列表）
+     */
+    public static final class GroupedModules {
+        private final String groupName;
+        private final int groupOrder;
+        private final List<WorkbenchModule> modules;
+
+        public GroupedModules(String groupName, int groupOrder, List<WorkbenchModule> modules) {
+            this.groupName = groupName;
+            this.groupOrder = groupOrder;
+            this.modules = modules;
+        }
+
+        public String getGroupName() { return groupName; }
+        public int getGroupOrder() { return groupOrder; }
+        public List<WorkbenchModule> getModules() { return modules; }
+    }
+
     /**
      * 清空注册表（主要用于测试）
      */

@@ -9,6 +9,8 @@ import org.kordamp.ikonli.materialdesign.MaterialDesign;
 @ToolModule(
     name = "Excel转JSON",
     category = ModuleCategory.DATA_PROCESS,
+    menuGroup = "数据处理",
+    menuGroupOrder = 30,
     description = "将Excel数据转换为JSON数组格式，支持批量处理",
     version = "2.0.0",
     author = "Tool Suite",

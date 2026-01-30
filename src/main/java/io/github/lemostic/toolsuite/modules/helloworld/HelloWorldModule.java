@@ -9,11 +9,13 @@ import org.kordamp.ikonli.materialdesign.MaterialDesign;
 @ToolModule(
     name = "Hello World",
     category = ModuleCategory.DEV_TOOLS,
+    menuGroup = "开发工具",
+    menuGroupOrder = 40,
     description = "示例模块，展示基本功能",
     version = "1.0.0",
     author = "lemostic",
     requiresPreferences = false,
-    priority = 999  // 示例模块，低优先级
+    priority = 999
 )
 public class HelloWorldModule extends WorkbenchModule {
 
