@@ -9,8 +9,8 @@
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         
         <!-- 实体类 -->
-        <class>io.github.lemostic.toolsuite.database.entity.ServerConfigurationEntity</class>
-        <class>io.github.lemostic.toolsuite.database.entity.DeploymentHistoryEntity</class>
+        <class>io.github.lemostic.toolsuite.modules.devops.deploy.entity.ServerConfigEntity</class>
+        <class>io.github.lemostic.toolsuite.modules.devops.deploy.entity.DeploymentHistoryEntity</class>
         
         <properties>
             <!-- 这些属性将在代码中动态设置 -->

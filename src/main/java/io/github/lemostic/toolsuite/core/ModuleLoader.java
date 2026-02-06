@@ -51,8 +51,7 @@ public class ModuleLoader {
         // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.data.DataMigrateModule.class);
         
         // ==================== 运维工具类 ====================
-        // 未来添加：
-        // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.devops.PackageDeploymentModule.class);
+        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.devops.deploy.DeployModule.class);
         
         // ==================== 网络工具类 ====================
         // 未来添加：
