@@ -1,19 +1,28 @@
 package io.github.lemostic.toolsuite.modules.devops.deploy.repository;
 
+import com.querydsl.core.types.EntityPath;
+import com.querydsl.core.types.Predicate;
 import io.github.lemostic.toolsuite.modules.devops.deploy.entity.DeploymentHistoryEntity;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.TypedQuery;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static io.github.lemostic.toolsuite.modules.devops.deploy.entity.QDeploymentHistoryEntity.deploymentHistoryEntity;
+
 /**
  * 部署历史 Repository
+ * 使用 QueryDSL 实现类型安全的查询
  */
-public class DeploymentHistoryRepository extends AbstractBaseRepository<DeploymentHistoryEntity, String> {
+public class DeploymentHistoryRepository extends QueryDslRepository<DeploymentHistoryEntity, String> {
     
     public DeploymentHistoryRepository(EntityManager entityManager) {
         super(entityManager, DeploymentHistoryEntity.class);
+    }
+    
+    @Override
+    protected EntityPath<DeploymentHistoryEntity> getEntityPath() {
+        return deploymentHistoryEntity;
     }
     
     @Override
@@ -25,71 +34,79 @@ public class DeploymentHistoryRepository extends AbstractBaseRepository<Deployme
      * 根据服务器ID查询历史记录
      */
     public List<DeploymentHistoryEntity> findByServerId(Long serverId) {
-        TypedQuery<DeploymentHistoryEntity> query = entityManager.createQuery(
-            "SELECT h FROM DeploymentHistoryEntity h WHERE h.serverId = :serverId ORDER BY h.createdAt DESC",
-            DeploymentHistoryEntity.class
+        return findAll(
+            deploymentHistoryEntity.serverId.eq(serverId),
+            deploymentHistoryEntity.createdAt.desc()
         );
-        query.setParameter("serverId", serverId);
-        return query.getResultList();
     }
     
     /**
      * 查询最近的部署历史
      */
     public List<DeploymentHistoryEntity> findRecent(int limit) {
-        TypedQuery<DeploymentHistoryEntity> query = entityManager.createQuery(
-            "SELECT h FROM DeploymentHistoryEntity h ORDER BY h.createdAt DESC",
-            DeploymentHistoryEntity.class
-        );
-        query.setMaxResults(limit);
-        return query.getResultList();
+        return getQueryFactory()
+            .selectFrom(deploymentHistoryEntity)
+            .orderBy(deploymentHistoryEntity.createdAt.desc())
+            .limit(limit)
+            .fetch();
     }
     
     /**
      * 根据状态查询
      */
     public List<DeploymentHistoryEntity> findByStatus(DeploymentHistoryEntity.DeploymentStatus status) {
-        TypedQuery<DeploymentHistoryEntity> query = entityManager.createQuery(
-            "SELECT h FROM DeploymentHistoryEntity h WHERE h.status = :status ORDER BY h.createdAt DESC",
-            DeploymentHistoryEntity.class
+        return findAll(
+            deploymentHistoryEntity.status.eq(status),
+            deploymentHistoryEntity.createdAt.desc()
         );
-        query.setParameter("status", status);
-        return query.getResultList();
     }
     
     /**
      * 查询时间范围内的部署记录
      */
     public List<DeploymentHistoryEntity> findByTimeRange(LocalDateTime start, LocalDateTime end) {
-        TypedQuery<DeploymentHistoryEntity> query = entityManager.createQuery(
-            "SELECT h FROM DeploymentHistoryEntity h WHERE h.createdAt BETWEEN :start AND :end ORDER BY h.createdAt DESC",
-            DeploymentHistoryEntity.class
-        );
-        query.setParameter("start", start);
-        query.setParameter("end", end);
-        return query.getResultList();
+        Predicate predicate = deploymentHistoryEntity.createdAt.between(start, end);
+        return findAll(predicate, deploymentHistoryEntity.createdAt.desc());
     }
     
     /**
      * 统计指定状态的数量
      */
     public long countByStatus(DeploymentHistoryEntity.DeploymentStatus status) {
-        TypedQuery<Long> query = entityManager.createQuery(
-            "SELECT COUNT(h) FROM DeploymentHistoryEntity h WHERE h.status = :status",
-            Long.class
-        );
-        query.setParameter("status", status);
-        return query.getSingleResult();
+        return count(deploymentHistoryEntity.status.eq(status));
+    }
+    
+    /**
+     * 统计成功率
+     */
+    public double calculateSuccessRate() {
+        long total = count();
+        if (total == 0) {
+            return 0.0;
+        }
+        long successCount = countByStatus(DeploymentHistoryEntity.DeploymentStatus.SUCCESS);
+        return (double) successCount / total * 100;
     }
     
     /**
      * 删除指定时间之前的记录
      */
     public int deleteBefore(LocalDateTime before) {
-        return entityManager.createQuery(
-            "DELETE FROM DeploymentHistoryEntity h WHERE h.createdAt < :before"
-        )
-        .setParameter("before", before)
-        .executeUpdate();
+        return (int) getQueryFactory()
+            .delete(deploymentHistoryEntity)
+            .where(deploymentHistoryEntity.createdAt.lt(before))
+            .execute();
+    }
+    
+    /**
+     * 查询最近的失败记录
+     */
+    public List<DeploymentHistoryEntity> findRecentFailures(int limit) {
+        return getQueryFactory()
+            .selectFrom(deploymentHistoryEntity)
+            .where(deploymentHistoryEntity.status.eq(DeploymentHistoryEntity.DeploymentStatus.FAILED))
+            .orderBy(deploymentHistoryEntity.createdAt.desc())
+            .limit(limit)
+            .fetch();
     }
 }

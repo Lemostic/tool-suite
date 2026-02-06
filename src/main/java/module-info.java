@@ -27,6 +27,8 @@ module ToolSuite {
     requires jakarta.persistence;
     requires jakarta.xml.bind;
     requires org.hibernate.orm.core;
+    requires com.querydsl.core;
+    requires com.querydsl.jpa;
     
     // ES查询模块相关
     requires java.net.http;
@@ -54,8 +56,8 @@ module ToolSuite {
     opens io.github.lemostic.toolsuite.modules.file.zipclean to javafx.fxml, javafx.base;
     opens io.github.lemostic.toolsuite.modules.search.es to javafx.fxml, javafx.base;
     
-    // 开放部署模块的包给Hibernate和JavaFX
-    opens io.github.lemostic.toolsuite.modules.devops.deploy.entity to org.hibernate.orm.core;
+    // 开放部署模块的包给Hibernate、QueryDSL和JavaFX
+    opens io.github.lemostic.toolsuite.modules.devops.deploy.entity to org.hibernate.orm.core, com.querydsl.jpa;
     opens io.github.lemostic.toolsuite.modules.devops.deploy.repository to org.hibernate.orm.core;
     opens io.github.lemostic.toolsuite.modules.devops.deploy.view to javafx.fxml, javafx.base;
     opens io.github.lemostic.toolsuite.modules.devops.deploy.view.components to javafx.fxml, javafx.base;

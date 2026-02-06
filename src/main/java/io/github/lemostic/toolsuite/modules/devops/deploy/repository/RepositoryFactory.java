@@ -15,7 +15,7 @@ import java.util.Map;
 
 /**
  * Repository 工厂
- * 管理 EntityManager 和 Repository 实例
+ * 管理 EntityManager 和 Repository 实例（单例模式）
  */
 public class RepositoryFactory {
     
