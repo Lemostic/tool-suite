@@ -35,6 +35,7 @@ public class ModuleLoader {
         ModuleRegistry.register(io.github.lemostic.toolsuite.modules.preferences.PreferencesModule.class);
         
         // ==================== 开发工具类 ====================
+        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.devtools.processmanager.ProcessManagerModule.class);
         // HelloWorldModule 已改为通过 SPI 加载，见 BuiltinDevToolsProvider
         // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.helloworld.HelloWorldModule.class);
         

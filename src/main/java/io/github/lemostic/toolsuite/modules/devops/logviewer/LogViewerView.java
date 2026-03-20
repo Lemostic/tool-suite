@@ -660,66 +660,277 @@ public class LogViewerView extends BorderPane {
     
     private void loadSavedServers() {
         try {
-            String serversData = prefs.get("servers", "");
+            String serversData = prefs.get("servers_v2", "");
+            if (serversData.isEmpty()) {
+                // 尝试加载旧版本数据
+                serversData = prefs.get("servers", "");
+            }
+            
             if (!serversData.isEmpty()) {
-                String[] serverEntries = serversData.split("\\|\\|");
-                for (String entry : serverEntries) {
-                    ServerConfig server = parseServerFromString(entry);
-                    if (server != null) {
-                        serverList.add(server);
-                        serverMap.put(server.getId(), server);
-                    }
+                List<ServerConfig> loadedServers = deserializeServers(serversData);
+                for (ServerConfig server : loadedServers) {
+                    serverList.add(server);
+                    serverMap.put(server.getId(), server);
                 }
+                System.out.println("[LogViewer] 成功加载 " + loadedServers.size() + " 个服务器配置");
+            } else {
+                System.out.println("[LogViewer] 没有找到保存的服务器配置");
             }
         } catch (Exception e) {
-            System.err.println("加载服务器配置失败: " + e.getMessage());
+            System.err.println("[LogViewer] 加载服务器配置失败: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
     private void saveServers() {
         try {
-            StringBuilder sb = new StringBuilder();
-            for (ServerConfig server : serverList) {
-                if (sb.length() > 0) sb.append("||");
-                sb.append(serializeServer(server));
-            }
-            prefs.put("servers", sb.toString());
+            String data = serializeServers(serverList);
+            prefs.put("servers_v2", data);
+            System.out.println("[LogViewer] 成功保存 " + serverList.size() + " 个服务器配置");
         } catch (Exception e) {
-            System.err.println("保存服务器配置失败: " + e.getMessage());
+            System.err.println("[LogViewer] 保存服务器配置失败: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
-    private String serializeServer(ServerConfig server) {
-        // 简单序列化，实际项目中可以使用 JSON
+    /**
+     * 序列化服务器列表为 JSON 格式字符串
+     */
+    private String serializeServers(List<ServerConfig> servers) {
         StringBuilder sb = new StringBuilder();
-        sb.append(server.getId()).append("##");
-        sb.append(server.getName()).append("##");
-        sb.append(server.getHost()).append("##");
-        sb.append(server.getPort()).append("##");
-        sb.append(server.getUsername()).append("##");
-        sb.append(server.getPassword()).append("##");
-        sb.append(server.isUsePasswordAuth()).append("##");
-        sb.append(server.getPrivateKeyPath()).append("##");
-        sb.append(server.getPrivateKeyPassphrase()).append("##");
-        sb.append(server.getRemark());
-        
-        // 序列化目录
-        if (server.getLogDirectories() != null && !server.getLogDirectories().isEmpty()) {
-            sb.append("##DIRS##");
-            for (int i = 0; i < server.getLogDirectories().size(); i++) {
-                LogDirectory dir = server.getLogDirectories().get(i);
-                if (i > 0) sb.append(";;");
-                sb.append(dir.getId()).append("::");
-                sb.append(dir.getName()).append("::");
-                sb.append(dir.getPath()).append("::");
-                sb.append(dir.getFilePattern());
+        sb.append("[");
+        for (int i = 0; i < servers.size(); i++) {
+            ServerConfig s = servers.get(i);
+            if (i > 0) sb.append(",");
+            sb.append("{");
+            sb.append("\"id\":\"").append(escapeJson(s.getId())).append("\",");
+            sb.append("\"name\":\"").append(escapeJson(s.getName())).append("\",");
+            sb.append("\"host\":\"").append(escapeJson(s.getHost())).append("\",");
+            sb.append("\"port\":").append(s.getPort()).append(",");
+            sb.append("\"username\":\"").append(escapeJson(s.getUsername())).append("\",");
+            sb.append("\"password\":\"").append(escapeJson(s.getPassword())).append("\",");
+            sb.append("\"usePasswordAuth\":").append(s.isUsePasswordAuth()).append(",");
+            sb.append("\"privateKeyPath\":\"").append(escapeJson(s.getPrivateKeyPath())).append("\",");
+            sb.append("\"privateKeyPassphrase\":\"").append(escapeJson(s.getPrivateKeyPassphrase())).append("\",");
+            sb.append("\"remark\":\"").append(escapeJson(s.getRemark())).append("\",");
+            sb.append("\"dirs\":[");
+            
+            List<LogDirectory> dirs = s.getLogDirectories();
+            if (dirs != null) {
+                for (int j = 0; j < dirs.size(); j++) {
+                    LogDirectory d = dirs.get(j);
+                    if (j > 0) sb.append(",");
+                    sb.append("{");
+                    sb.append("\"id\":\"").append(escapeJson(d.getId())).append("\",");
+                    sb.append("\"name\":\"").append(escapeJson(d.getName())).append("\",");
+                    sb.append("\"path\":\"").append(escapeJson(d.getPath())).append("\",");
+                    sb.append("\"pattern\":\"").append(escapeJson(d.getFilePattern())).append("\"");
+                    sb.append("}");
+                }
             }
+            sb.append("]}");
         }
-        
+        sb.append("]");
         return sb.toString();
     }
     
-    private ServerConfig parseServerFromString(String str) {
+    /**
+     * 反序列化 JSON 格式字符串为服务器列表
+     */
+    private List<ServerConfig> deserializeServers(String json) {
+        List<ServerConfig> result = new ArrayList<>();
+        if (json == null || json.trim().isEmpty() || !json.startsWith("[")) {
+            // 尝试旧格式解析
+            return deserializeServersLegacy(json);
+        }
+        
+        try {
+            // 简单 JSON 解析（不使用第三方库）
+            json = json.trim();
+            if (json.startsWith("[") && json.endsWith("]")) {
+                json = json.substring(1, json.length() - 1);
+            }
+            
+            List<String> serverJsons = splitJsonObjects(json);
+            for (String serverJson : serverJsons) {
+                ServerConfig server = parseServerJson(serverJson);
+                if (server != null) {
+                    result.add(server);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[LogViewer] JSON 解析失败，尝试旧格式: " + e.getMessage());
+            return deserializeServersLegacy(json);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 解析单个服务器 JSON
+     */
+    private ServerConfig parseServerJson(String json) {
+        try {
+            String id = extractJsonValue(json, "id");
+            String name = extractJsonValue(json, "name");
+            String host = extractJsonValue(json, "host");
+            int port = Integer.parseInt(extractJsonValue(json, "port", "22"));
+            String username = extractJsonValue(json, "username");
+            String password = extractJsonValue(json, "password");
+            boolean usePasswordAuth = Boolean.parseBoolean(extractJsonValue(json, "usePasswordAuth", "true"));
+            String privateKeyPath = extractJsonValue(json, "privateKeyPath");
+            String privateKeyPassphrase = extractJsonValue(json, "privateKeyPassphrase");
+            String remark = extractJsonValue(json, "remark");
+            
+            // 解析目录
+            List<LogDirectory> directories = new ArrayList<>();
+            String dirsJson = extractJsonArray(json, "dirs");
+            if (dirsJson != null && !dirsJson.isEmpty()) {
+                List<String> dirJsons = splitJsonObjects(dirsJson);
+                for (String dirJson : dirJsons) {
+                    String dirId = extractJsonValue(dirJson, "id");
+                    String dirName = extractJsonValue(dirJson, "name");
+                    String dirPath = extractJsonValue(dirJson, "path");
+                    String dirPattern = extractJsonValue(dirJson, "pattern");
+                    if (dirId != null && dirPath != null) {
+                        directories.add(LogDirectory.builder()
+                            .id(dirId)
+                            .name(dirName)
+                            .path(dirPath)
+                            .filePattern(dirPattern != null ? dirPattern : "*.log")
+                            .build());
+                    }
+                }
+            }
+            
+            return ServerConfig.builder()
+                .id(id != null ? id : UUID.randomUUID().toString())
+                .name(name)
+                .host(host)
+                .port(port)
+                .username(username)
+                .password(password)
+                .usePasswordAuth(usePasswordAuth)
+                .privateKeyPath(privateKeyPath)
+                .privateKeyPassphrase(privateKeyPassphrase)
+                .remark(remark)
+                .logDirectories(directories)
+                .build();
+        } catch (Exception e) {
+            System.err.println("[LogViewer] 解析服务器 JSON 失败: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * 从 JSON 字符串中提取字段值
+     */
+    private String extractJsonValue(String json, String key) {
+        return extractJsonValue(json, key, null);
+    }
+    
+    private String extractJsonValue(String json, String key, String defaultValue) {
+        String pattern = "\"" + key + "\":\"";
+        int start = json.indexOf(pattern);
+        if (start < 0) {
+            // 尝试数字或布尔值
+            pattern = "\"" + key + "\":";
+            start = json.indexOf(pattern);
+            if (start < 0) return defaultValue;
+            start += pattern.length();
+            int end = json.indexOf(",", start);
+            if (end < 0) end = json.indexOf("}", start);
+            if (end < 0) return defaultValue;
+            return json.substring(start, end).trim();
+        }
+        start += pattern.length();
+        int end = json.indexOf("\"", start);
+        if (end < 0) return defaultValue;
+        String value = json.substring(start, end);
+        return unescapeJson(value);
+    }
+    
+    /**
+     * 从 JSON 字符串中提取数组
+     */
+    private String extractJsonArray(String json, String key) {
+        String pattern = "\"" + key + "\":[";
+        int start = json.indexOf(pattern);
+        if (start < 0) return null;
+        start += pattern.length();
+        int end = json.indexOf("]", start);
+        if (end < 0) return null;
+        return json.substring(start, end);
+    }
+    
+    /**
+     * 分割 JSON 对象数组
+     */
+    private List<String> splitJsonObjects(String json) {
+        List<String> result = new ArrayList<>();
+        int depth = 0;
+        int start = 0;
+        for (int i = 0; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (c == '{') {
+                if (depth == 0) start = i;
+                depth++;
+            } else if (c == '}') {
+                depth--;
+                if (depth == 0) {
+                    result.add(json.substring(start, i + 1));
+                }
+            }
+        }
+        return result;
+    }
+    
+    /**
+     * JSON 字符串转义
+     */
+    private String escapeJson(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
+    }
+    
+    /**
+     * JSON 字符串反转义
+     */
+    private String unescapeJson(String s) {
+        if (s == null) return null;
+        return s.replace("\\n", "\n")
+                .replace("\\r", "\r")
+                .replace("\\t", "\t")
+                .replace("\\\\", "\\")
+                .replace("\\\"", "\"");
+    }
+    
+    /**
+     * 旧格式反序列化（兼容旧版本数据）
+     */
+    private List<ServerConfig> deserializeServersLegacy(String data) {
+        List<ServerConfig> result = new ArrayList<>();
+        if (data == null || data.isEmpty()) return result;
+        
+        try {
+            String[] serverEntries = data.split("\\|\\|");
+            for (String entry : serverEntries) {
+                ServerConfig server = parseServerFromStringLegacy(entry);
+                if (server != null) {
+                    result.add(server);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[LogViewer] 旧格式解析失败: " + e.getMessage());
+        }
+        return result;
+    }
+    
+    private ServerConfig parseServerFromStringLegacy(String str) {
         try {
             String[] parts = str.split("##DIRS##");
             String[] mainParts = parts[0].split("##");
@@ -757,7 +968,7 @@ public class LogViewerView extends BorderPane {
                 .build();
                 
         } catch (Exception e) {
-            System.err.println("解析服务器配置失败: " + e.getMessage());
+            System.err.println("[LogViewer] 解析旧格式服务器配置失败: " + e.getMessage());
             return null;
         }
     }
