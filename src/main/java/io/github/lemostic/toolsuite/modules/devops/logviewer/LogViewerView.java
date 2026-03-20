@@ -21,6 +21,8 @@ import org.kordamp.ikonli.materialdesign.MaterialDesign;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.prefs.Preferences;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -313,29 +315,37 @@ public class LogViewerView extends BorderPane {
         autoScrollCheck.setSelected(true);
         autoScrollCheck.setTooltip(new Tooltip("加载日志后自动滚动到末尾"));
         
-        toolbar.getChildren().addAll(icon, titleLabel, spacer, linesLabel, linesCombo, 
-                                     searchField, searchBtn, copyBtn, downloadBtn, clearBtn, autoScrollCheck);
+        // 显示行号选项
+        CheckBox showLineNumbersCheck = new CheckBox("显示行号");
+        showLineNumbersCheck.setSelected(true);
+        showLineNumbersCheck.setTooltip(new Tooltip("在日志行前显示行号"));
         
-        // 日志内容区域
-        TextArea logArea = new TextArea();
-        logArea.setEditable(false);
-        logArea.setWrapText(false);
-        logArea.setStyle("-fx-font-family: 'Consolas', 'Monaco', 'Courier New', monospace; " +
-                        "-fx-font-size: 12px; " +
-                        "-fx-background-color: #fafafa; " +
-                        "-fx-text-fill: #000000;");
-        logArea.setPromptText("选择日志文件后，内容将显示在这里...");
+        toolbar.getChildren().addAll(icon, titleLabel, spacer, linesLabel, linesCombo, 
+                                     searchField, searchBtn, copyBtn, downloadBtn, clearBtn, 
+                                     autoScrollCheck, showLineNumbersCheck);
+        
+        // 日志内容区域 - 使用 ListView 支持语法高亮
+        ListView<String> logListView = new ListView<>();
+        logListView.setStyle("-fx-background-color: #1e1e1e; " +
+                            "-fx-control-inner-background: #1e1e1e; " +
+                            "-fx-control-inner-background-alt: #252526;");
+        
+        // 创建自定义单元格工厂，支持语法高亮和行号
+        logListView.setCellFactory(lv -> new LogLineCell(showLineNumbersCheck));
         
         // 存储引用
         TabContent tabContent = tabContentMap.get(directory.getId());
         if (tabContent != null) {
-            tabContent.logArea = logArea;
+            tabContent.logListView = logListView;
+            tabContent.logLines = FXCollections.observableArrayList();
+            logListView.setItems(tabContent.logLines);
             tabContent.linesCombo = linesCombo;
             tabContent.autoScrollCheck = autoScrollCheck;
+            tabContent.showLineNumbersCheck = showLineNumbersCheck;
         }
         
-        VBox.setVgrow(logArea, Priority.ALWAYS);
-        panel.getChildren().addAll(toolbar, logArea);
+        VBox.setVgrow(logListView, Priority.ALWAYS);
+        panel.getChildren().addAll(toolbar, logListView);
         
         return panel;
     }
@@ -486,32 +496,34 @@ public class LogViewerView extends BorderPane {
     
     private void loadLogFile(LogFile logFile, LogDirectory directory) {
         TabContent content = tabContentMap.get(directory.getId());
-        if (content == null || content.logArea == null) return;
+        if (content == null || content.logListView == null) return;
         
         int linesIndex = content.linesCombo.getSelectionModel().getSelectedIndex();
         int lines = linesIndex >= 0 ? LINE_VALUES[linesIndex] : -200;
         
         content.currentFile = logFile;
-        content.logArea.clear();
-        content.logArea.setPromptText("正在加载 " + logFile.getName() + " ...");
+        content.logLines.clear();
         
         progressBar.setVisible(true);
         
         service.readLogFileAsync(logFile, lines)
             .thenAccept(logContent -> Platform.runLater(() -> {
-                content.logArea.setText(logContent);
+                // 将日志内容按行分割
+                String[] linesArray = logContent.split("\\r?\\n");
+                content.logLines.addAll(Arrays.asList(linesArray));
+                
                 // 根据自动滚动选项决定是否滚动到底部
                 if (content.autoScrollCheck != null && content.autoScrollCheck.isSelected() && lines < 0) {
                     // 如果是加载尾部行数，滚动到底部
-                    content.logArea.positionCaret(logContent.length());
+                    content.logListView.scrollTo(content.logLines.size() - 1);
                 } else {
-                    content.logArea.positionCaret(0);
+                    content.logListView.scrollTo(0);
                 }
                 progressBar.setVisible(false);
             }))
             .exceptionally(throwable -> {
                 Platform.runLater(() -> {
-                    content.logArea.setText("读取失败: " + throwable.getMessage());
+                    content.logLines.add("读取失败: " + throwable.getMessage());
                     progressBar.setVisible(false);
                 });
                 return null;
@@ -569,32 +581,55 @@ public class LogViewerView extends BorderPane {
     
     private void searchInLog(String keyword, LogDirectory directory) {
         TabContent content = tabContentMap.get(directory.getId());
-        if (content == null || content.logArea == null || keyword == null || keyword.isEmpty()) return;
+        if (content == null || content.logListView == null || keyword == null || keyword.isEmpty()) return;
         
-        String text = content.logArea.getText();
-        int caretPos = content.logArea.getCaretPosition();
+        int currentSelection = content.logListView.getSelectionModel().getSelectedIndex();
+        int startIndex = currentSelection + 1;
         
-        int foundPos = text.toLowerCase().indexOf(keyword.toLowerCase(), caretPos);
-        if (foundPos == -1) {
-            // 从头开始搜索
-            foundPos = text.toLowerCase().indexOf(keyword.toLowerCase());
+        // 从当前选中位置开始搜索
+        for (int i = startIndex; i < content.logLines.size(); i++) {
+            String line = content.logLines.get(i);
+            if (line.toLowerCase().contains(keyword.toLowerCase())) {
+                content.logListView.getSelectionModel().select(i);
+                content.logListView.scrollTo(i);
+                return;
+            }
         }
         
-        if (foundPos != -1) {
-            content.logArea.selectRange(foundPos, foundPos + keyword.length());
-            content.logArea.requestFocus();
-        } else {
-            showAlert("搜索", "未找到 \"" + keyword + "\"", Alert.AlertType.INFORMATION);
+        // 从头开始搜索
+        for (int i = 0; i < startIndex; i++) {
+            String line = content.logLines.get(i);
+            if (line.toLowerCase().contains(keyword.toLowerCase())) {
+                content.logListView.getSelectionModel().select(i);
+                content.logListView.scrollTo(i);
+                return;
+            }
         }
+        
+        showAlert("搜索", "未找到 \"" + keyword + "\"", Alert.AlertType.INFORMATION);
     }
     
     private void copyLogContent(LogDirectory directory) {
         TabContent content = tabContentMap.get(directory.getId());
-        if (content == null || content.logArea == null) return;
+        if (content == null || content.logListView == null) return;
         
-        String text = content.logArea.getSelectedText();
-        if (text == null || text.isEmpty()) {
-            text = content.logArea.getText();
+        // 获取选中的行
+        ObservableList<Integer> selectedIndices = content.logListView.getSelectionModel().getSelectedIndices();
+        String text;
+        
+        if (selectedIndices.isEmpty()) {
+            // 没有选中则复制全部
+            text = String.join("\n", content.logLines);
+        } else {
+            // 复制选中的行
+            StringBuilder sb = new StringBuilder();
+            for (int i : selectedIndices) {
+                if (i >= 0 && i < content.logLines.size()) {
+                    if (sb.length() > 0) sb.append("\n");
+                    sb.append(content.logLines.get(i));
+                }
+            }
+            text = sb.toString();
         }
         
         javafx.scene.input.Clipboard clipboard = javafx.scene.input.Clipboard.getSystemClipboard();
@@ -607,9 +642,9 @@ public class LogViewerView extends BorderPane {
     
     private void clearLogContent(LogDirectory directory) {
         TabContent content = tabContentMap.get(directory.getId());
-        if (content == null || content.logArea == null) return;
+        if (content == null || content.logListView == null) return;
         
-        content.logArea.clear();
+        content.logLines.clear();
         content.currentFile = null;
     }
     
@@ -978,9 +1013,11 @@ public class LogViewerView extends BorderPane {
      */
     private static class TabContent {
         TableView<LogFile> fileTable;
-        TextArea logArea;
+        ListView<String> logListView;
+        ObservableList<String> logLines = FXCollections.observableArrayList();
         ComboBox<String> linesCombo;
         CheckBox autoScrollCheck;
+        CheckBox showLineNumbersCheck;
         LogFile currentFile;
     }
     
@@ -1099,6 +1136,145 @@ public class LogViewerView extends BorderPane {
             alert.setHeaderText(null);
             alert.setContentText(content);
             alert.showAndWait();
+        }
+    }
+    
+    /**
+     * 日志行单元格 - 支持语法高亮和行号显示
+     */
+    private static class LogLineCell extends ListCell<String> {
+        
+        private final HBox container;
+        private final Label lineNumberLabel;
+        private final Label contentLabel;
+        private final CheckBox showLineNumbersCheck;
+        
+        // 日志级别正则表达式
+        private static final Pattern LOG_LEVEL_PATTERN = Pattern.compile(
+            "\\b(?i)(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL|SEVERE)\\b|" +
+            "\\[(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL|SEVERE)\\]",
+            Pattern.CASE_INSENSITIVE
+        );
+        
+        // 时间戳正则
+        private static final Pattern TIMESTAMP_PATTERN = Pattern.compile(
+            "\\d{4}[-/]\\d{2}[-/]\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:?\\d{2})?"
+        );
+        
+        // 异常类名正则
+        private static final Pattern EXCEPTION_PATTERN = Pattern.compile(
+            "^[\\t ]*(at\\s+[\\w.$]+\\.[\\w]+\\([^)]*\\))|" +
+            "(^[\\w.$]+(Exception|Error|Throwable)[\\w.$]*:.*)"
+        );
+        
+        public LogLineCell(CheckBox showLineNumbersCheck) {
+            this.showLineNumbersCheck = showLineNumbersCheck;
+            
+            container = new HBox();
+            container.setAlignment(Pos.CENTER_LEFT);
+            container.setSpacing(8);
+            
+            // 行号标签
+            lineNumberLabel = new Label();
+            lineNumberLabel.setStyle("-fx-font-family: 'Consolas', 'Monaco', 'Courier New', monospace; " +
+                                   "-fx-font-size: 12px; " +
+                                   "-fx-text-fill: #858585; " +
+                                   "-fx-min-width: 50px; " +
+                                   "-fx-alignment: CENTER-RIGHT;");
+            lineNumberLabel.setVisible(showLineNumbersCheck.isSelected());
+            lineNumberLabel.setManaged(showLineNumbersCheck.isSelected());
+            
+            // 监听行号显示开关
+            showLineNumbersCheck.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                lineNumberLabel.setVisible(newVal);
+                lineNumberLabel.setManaged(newVal);
+            });
+            
+            // 内容标签
+            contentLabel = new Label();
+            contentLabel.setStyle("-fx-font-family: 'Consolas', 'Monaco', 'Courier New', monospace; " +
+                                "-fx-font-size: 12px;");
+            contentLabel.setWrapText(false);
+            contentLabel.setTextOverrun(javafx.scene.control.OverrunStyle.ELLIPSIS);
+            
+            container.getChildren().addAll(lineNumberLabel, contentLabel);
+            
+            // 设置单元格样式
+            setStyle("-fx-background-color: transparent; -fx-padding: 2 5 2 5;");
+        }
+        
+        @Override
+        protected void updateItem(String line, boolean empty) {
+            super.updateItem(line, empty);
+            
+            if (empty || line == null) {
+                setGraphic(null);
+                setText(null);
+                return;
+            }
+            
+            // 更新行号
+            int lineNumber = getIndex() + 1;
+            lineNumberLabel.setText(String.valueOf(lineNumber));
+            
+            // 分析日志行并设置颜色
+            String style = analyzeLogLine(line);
+            contentLabel.setText(line);
+            contentLabel.setStyle("-fx-font-family: 'Consolas', 'Monaco', 'Courier New', monospace; " +
+                                "-fx-font-size: 12px; " + style);
+            
+            setGraphic(container);
+        }
+        
+        /**
+         * 分析日志行并返回对应的样式
+         */
+        private String analyzeLogLine(String line) {
+            // 默认样式 - 浅灰色文本
+            String textStyle = "-fx-text-fill: #d4d4d4;";
+            
+            // 检测日志级别
+            Matcher levelMatcher = LOG_LEVEL_PATTERN.matcher(line);
+            if (levelMatcher.find()) {
+                String level = levelMatcher.group(1) != null ? 
+                    levelMatcher.group(1).toUpperCase() : 
+                    (levelMatcher.group(2) != null ? levelMatcher.group(2).toUpperCase() : "");
+                
+                switch (level) {
+                    case "TRACE":
+                    case "DEBUG":
+                        textStyle = "-fx-text-fill: #608b4e;"; // 绿色
+                        break;
+                    case "INFO":
+                        textStyle = "-fx-text-fill: #4ec9b0;"; // 青色
+                        break;
+                    case "WARN":
+                    case "WARNING":
+                        textStyle = "-fx-text-fill: #dcdcaa;"; // 黄色
+                        break;
+                    case "ERROR":
+                    case "FATAL":
+                    case "SEVERE":
+                        textStyle = "-fx-text-fill: #f14c4c;"; // 红色
+                        break;
+                }
+                return textStyle;
+            }
+            
+            // 检测异常堆栈
+            Matcher exceptionMatcher = EXCEPTION_PATTERN.matcher(line);
+            if (exceptionMatcher.find()) {
+                return "-fx-text-fill: #ce9178;"; // 橙色
+            }
+            
+            // 检测时间戳
+            Matcher timestampMatcher = TIMESTAMP_PATTERN.matcher(line);
+            if (timestampMatcher.find()) {
+                // 时间戳高亮但不改变整体颜色
+                return "-fx-text-fill: #d4d4d4;"; // 默认颜色
+            }
+            
+            return textStyle;
         }
     }
 }
