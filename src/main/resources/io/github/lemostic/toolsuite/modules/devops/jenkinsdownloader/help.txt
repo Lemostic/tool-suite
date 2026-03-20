@@ -1,0 +1,62 @@
+📦 Jenkins文件下载工具 - 使用指南
+
+🔧 使用步骤:
+
+1. 配置Jenkins连接
+   • 点击"新建"创建Jenkins服务器配置
+   • 输入配置名称、服务器URL、用户名和API Token
+   • API Token可在 Jenkins -> 用户设置 -> Configure -> API Token 中生成
+
+2. 输入工作区URL
+   • 格式: http://jenkins-server/job/jobname/ws/path/
+   • 例如: http://jenkins.company.com/job/myapp-build/ws/target/lib/
+   • 点击"获取文件列表"加载文件
+
+3. 过滤文件
+   • 选择匹配方式：前缀、后缀、包含、正则、精确
+   • 输入匹配规则
+   • 点击"应用过滤"筛选文件
+   • 使用"全选"/"取消全选"批量操作
+
+4. 选择下载目录
+   • 点击"浏览"选择文件保存位置
+   • 默认保存到用户下载目录下的 jenkins-files 文件夹
+
+5. 开始下载
+   • 在文件列表中勾选要下载的文件
+   • 点击"开始下载"
+   • 等待下载完成
+
+📝 匹配规则示例:
+
+前缀匹配:
+• spring-boot    匹配 spring-boot-starter.jar
+• myapp-         匹配 myapp-core-1.0.jar
+
+后缀匹配:
+• .jar           匹配所有jar文件
+• -sources.jar   匹配源码包
+
+包含匹配:
+• starter        匹配包含starter的文件
+• core           匹配包含core的文件
+
+正则匹配:
+• ^myapp-.*\.jar$     匹配myapp开头的jar文件
+• .*-(\d+\.)+jar$     匹配带版本号的jar文件
+
+精确匹配:
+• myapp-1.0.jar      只匹配这个具体文件
+
+⚠️ 注意事项:
+
+• 确保Jenkins服务器可访问
+• API Token需要有读取工作区的权限
+• 大量文件下载可能需要较长时间
+• 下载过程中请勿关闭程序
+
+💡 小贴士:
+
+• 可以保存多个Jenkins配置，方便切换不同服务器
+• 过滤后可以使用"全选"快速选择匹配的文件
+• 下载状态会显示在每个文件的"状态"列中
