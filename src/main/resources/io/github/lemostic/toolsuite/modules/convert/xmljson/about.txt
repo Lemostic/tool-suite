@@ -1,0 +1,6 @@
+XML/JSON互转工具
+版本: 1.0.0
+作者: Tool Suite
+功能: XML与JSON数据格式互相转换，支持格式化输出
+
+© 2025 Tool Suite

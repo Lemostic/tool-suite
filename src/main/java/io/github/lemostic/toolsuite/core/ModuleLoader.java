@@ -35,6 +35,7 @@ public class ModuleLoader {
         ModuleRegistry.register(io.github.lemostic.toolsuite.modules.preferences.PreferencesModule.class);
         
         // ==================== 开发工具类 ====================
+        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.devtools.processmanager.ProcessManagerModule.class);
         // HelloWorldModule 已改为通过 SPI 加载，见 BuiltinDevToolsProvider
         // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.helloworld.HelloWorldModule.class);
         
@@ -47,11 +48,13 @@ public class ModuleLoader {
         // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.database.redis.RedisClientModule.class);
         
         // ==================== 数据处理类 ====================
-        // 未来添加：
-        // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.data.DataMigrateModule.class);
+        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.excel.json.ExcelToJSONModule.class);
+        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.convert.xmljson.XmlJsonConverterModule.class);
+        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.devops.jenkinsdownloader.JenkinsDownloaderModule.class);
         
         // ==================== 运维工具类 ====================
-        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.devops.deploy.DeployModule.class);
+        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.devops.logviewer.LogViewerModule.class);
+        //ModuleRegistry.register(io.github.lemostic.toolsuite.modules.devops.deploy.DeployModule.class);
         
         // ==================== 网络工具类 ====================
         // 未来添加：
