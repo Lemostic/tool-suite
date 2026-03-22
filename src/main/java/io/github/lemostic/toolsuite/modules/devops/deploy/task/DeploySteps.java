@@ -14,7 +14,7 @@ public class DeploySteps {
     private static final Logger logger = LoggerFactory.getLogger(DeploySteps.class);
     
     // 连接服务器步骤
-    public static TaskStep createConnectStep(SshCommandService sshService, ServerConfig server) {
+    public static TaskStep createConnectStep(SshCommandService sshService, ServerConfigDTO server) {
         return new TaskStep() {
             @Override
             public String getName() {
@@ -47,7 +47,7 @@ public class DeploySteps {
     }
     
     // 停止服务步骤
-    public static TaskStep createStopServiceStep(SshCommandService sshService, ServerConfig server) {
+    public static TaskStep createStopServiceStep(SshCommandService sshService, ServerConfigDTO server) {
         return new TaskStep() {
             @Override
             public String getName() {
@@ -112,7 +112,7 @@ public class DeploySteps {
     }
     
     // 备份步骤
-    public static TaskStep createBackupStep(SshCommandService sshService, ServerConfig server, 
+    public static TaskStep createBackupStep(SshCommandService sshService, ServerConfigDTO server,
                                              BackupOptions options) {
         return new TaskStep() {
             @Override
@@ -222,7 +222,7 @@ public class DeploySteps {
     }
     
     // 上传步骤
-    public static TaskStep createUploadStep(SftpTransferService sftpService, ServerConfig server,
+    public static TaskStep createUploadStep(SftpTransferService sftpService, ServerConfigDTO server,
                                              String localPackagePath, UploadOptions options) {
         return new TaskStep() {
             @Override
@@ -302,7 +302,7 @@ public class DeploySteps {
     }
     
     // 启动服务步骤
-    public static TaskStep createStartServiceStep(SshCommandService sshService, ServerConfig server) {
+    public static TaskStep createStartServiceStep(SshCommandService sshService, ServerConfigDTO server) {
         return new TaskStep() {
             @Override
             public String getName() {

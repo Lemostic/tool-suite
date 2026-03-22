@@ -13,7 +13,7 @@ public class DeployTask {
     }
     
     private StringProperty id;
-    private ObjectProperty<ServerConfig> server;
+    private ObjectProperty<ServerConfigDTO> server;
     private StringProperty packagePath;
     private ObjectProperty<TaskStatus> status;
     private StringProperty currentStep;
@@ -54,15 +54,15 @@ public class DeployTask {
     }
     
     // server
-    public ServerConfig getServer() {
+    public ServerConfigDTO getServer() {
         return server.get();
     }
     
-    public void setServer(ServerConfig server) {
+    public void setServer(ServerConfigDTO server) {
         this.server.set(server);
     }
     
-    public ObjectProperty<ServerConfig> serverProperty() {
+    public ObjectProperty<ServerConfigDTO> serverProperty() {
         return server;
     }
     

@@ -2,8 +2,7 @@ package io.github.lemostic.toolsuite.modules.devops.deploy.service;
 
 import com.jcraft.jsch.*;
 import com.jcraft.jsch.SftpProgressMonitor;
-import io.github.lemostic.toolsuite.modules.devops.deploy.model.ServerConfig;
-import io.github.lemostic.toolsuite.modules.devops.deploy.model.UploadOptions;
+import io.github.lemostic.toolsuite.modules.devops.deploy.model.ServerConfigDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,8 +18,8 @@ public class SftpTransferService {
         this.connectionPool = connectionPool;
     }
     
-    public void uploadFile(ServerConfig server, String localPath, String remotePath,
-                          Consumer<Long> progressCallback) throws Exception {
+    public void uploadFile(ServerConfigDTO server, String localPath, String remotePath,
+                           Consumer<Long> progressCallback) throws Exception {
         Session session = connectionPool.getSession(server);
         ChannelSftp channel = null;
         
@@ -63,7 +62,7 @@ public class SftpTransferService {
         }
     }
     
-    public void downloadFile(ServerConfig server, String remotePath, String localPath) throws Exception {
+    public void downloadFile(ServerConfigDTO server, String remotePath, String localPath) throws Exception {
         Session session = connectionPool.getSession(server);
         ChannelSftp channel = null;
         
@@ -82,7 +81,7 @@ public class SftpTransferService {
         }
     }
     
-    public void setFilePermissions(ServerConfig server, String remotePath, 
+    public void setFilePermissions(ServerConfigDTO server, String remotePath,
                                    String permissions) throws Exception {
         Session session = connectionPool.getSession(server);
         ChannelSftp channel = null;
@@ -98,8 +97,8 @@ public class SftpTransferService {
         }
     }
     
-    public void setFileOwner(ServerConfig server, String remotePath, 
-                            String owner, String group) throws Exception {
+    public void setFileOwner(ServerConfigDTO server, String remotePath,
+                             String owner, String group) throws Exception {
         String command = String.format("chown %s:%s %s", owner, group, remotePath);
         ChannelExec channel = null;
         
@@ -120,7 +119,7 @@ public class SftpTransferService {
         }
     }
     
-    public void createRemoteDirectory(ServerConfig server, String remotePath) throws Exception {
+    public void createRemoteDirectory(ServerConfigDTO server, String remotePath) throws Exception {
         Session session = connectionPool.getSession(server);
         ChannelSftp channel = null;
         

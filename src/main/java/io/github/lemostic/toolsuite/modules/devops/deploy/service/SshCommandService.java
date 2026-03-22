@@ -1,7 +1,7 @@
 package io.github.lemostic.toolsuite.modules.devops.deploy.service;
 
 import com.jcraft.jsch.*;
-import io.github.lemostic.toolsuite.modules.devops.deploy.model.ServerConfig;
+import io.github.lemostic.toolsuite.modules.devops.deploy.model.ServerConfigDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +17,7 @@ public class SshCommandService {
         this.connectionPool = connectionPool;
     }
     
-    public int executeCommand(ServerConfig server, String command, 
+    public int executeCommand(ServerConfigDTO server, String command,
                               Consumer<String> outputConsumer,
                               Consumer<String> errorConsumer) throws Exception {
         Session session = connectionPool.getSession(server);
@@ -81,7 +81,7 @@ public class SshCommandService {
         }
     }
     
-    public boolean testConnection(ServerConfig server) {
+    public boolean testConnection(ServerConfigDTO server) {
         try {
             Session session = connectionPool.getSession(server);
             return session.isConnected();

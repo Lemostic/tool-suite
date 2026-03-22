@@ -1,11 +1,10 @@
 package io.github.lemostic.toolsuite.modules.devops.deploy.service;
 
 import com.jcraft.jsch.*;
-import io.github.lemostic.toolsuite.modules.devops.deploy.model.ServerConfig;
+import io.github.lemostic.toolsuite.modules.devops.deploy.model.ServerConfigDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
 import java.util.concurrent.*;
 
 public class SshConnectionPool {
@@ -16,7 +15,7 @@ public class SshConnectionPool {
     private final ConcurrentHashMap<String, Session> sessionPool = new ConcurrentHashMap<>();
     private final JSch jsch = new JSch();
     
-    public Session getSession(ServerConfig server) throws JSchException {
+    public Session getSession(ServerConfigDTO server) throws JSchException {
         String key = server.getHost() + ":" + server.getPort() + "@" + server.getUsername();
         
         Session session = sessionPool.get(key);
@@ -36,7 +35,7 @@ public class SshConnectionPool {
         return session;
     }
     
-    public void closeSession(ServerConfig server) {
+    public void closeSession(ServerConfigDTO server) {
         String key = server.getHost() + ":" + server.getPort() + "@" + server.getUsername();
         Session session = sessionPool.remove(key);
         if (session != null && session.isConnected()) {

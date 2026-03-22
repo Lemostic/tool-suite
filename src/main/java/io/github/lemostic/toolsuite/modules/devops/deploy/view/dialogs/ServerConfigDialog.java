@@ -1,14 +1,13 @@
 package io.github.lemostic.toolsuite.modules.devops.deploy.view.dialogs;
 
-import io.github.lemostic.toolsuite.modules.devops.deploy.model.ServerConfig;
+import io.github.lemostic.toolsuite.modules.devops.deploy.model.ServerConfigDTO;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.materialdesign.MaterialDesign;
 
-public class ServerConfigDialog extends Dialog<ServerConfig> {
+public class ServerConfigDialog extends Dialog<ServerConfigDTO> {
     
     private TextField nameField;
     private TextField hostField;
@@ -22,13 +21,13 @@ public class ServerConfigDialog extends Dialog<ServerConfig> {
     private TextField startScriptField;
     private TextArea descriptionArea;
     
-    private ServerConfig existingConfig;
+    private ServerConfigDTO existingConfig;
     
     public ServerConfigDialog() {
         this(null);
     }
     
-    public ServerConfigDialog(ServerConfig config) {
+    public ServerConfigDialog(ServerConfigDTO config) {
         this.existingConfig = config;
         initializeUI();
         if (config != null) {
@@ -169,7 +168,7 @@ public class ServerConfigDialog extends Dialog<ServerConfig> {
         return grid;
     }
     
-    private void loadConfig(ServerConfig config) {
+    private void loadConfig(ServerConfigDTO config) {
         nameField.setText(config.getName());
         hostField.setText(config.getHost());
         portField.setText(String.valueOf(config.getPort()));
@@ -183,7 +182,7 @@ public class ServerConfigDialog extends Dialog<ServerConfig> {
         descriptionArea.setText(config.getDescription());
     }
     
-    private ServerConfig validateAndCreateConfig() {
+    private ServerConfigDTO validateAndCreateConfig() {
         // 验证必填字段
         if (isNullOrEmpty(nameField.getText())) {
             showError("名称不能为空");
@@ -206,7 +205,7 @@ public class ServerConfigDialog extends Dialog<ServerConfig> {
             return null;
         }
         
-        ServerConfig config = existingConfig != null ? existingConfig : new ServerConfig();
+        ServerConfigDTO config = existingConfig != null ? existingConfig : new ServerConfigDTO();
         
         config.setName(nameField.getText().trim());
         config.setHost(hostField.getText().trim());

@@ -1,24 +1,24 @@
-package io.github.lemostic.toolsuite.modules.devops.deploy.entity;
+package io.github.lemostic.toolsuite.modules.devops.deploy.dao;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * 服务器配置实体类
+ */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
-@Table(name = "deploy_server_config")
-public class ServerConfigEntity {
-    
+@Table(name = "server_config")
+public class ServerConfig {
+
+    // Getters and Setters
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
     
     @Column(nullable = false)
@@ -40,15 +40,14 @@ public class ServerConfigEntity {
     private String backupDirectory;
     
     @Column(name = "bin_directory")
-    private String binDirectory = "bin";
+    private String binDirectory;
     
     @Column(name = "stop_script")
-    private String stopScript = "stop.sh";
+    private String stopScript;
     
     @Column(name = "start_script")
-    private String startScript = "start.sh";
+    private String startScript;
     
-    @Column(length = 500)
     private String description;
     
     @Column(name = "created_at")
@@ -57,17 +56,26 @@ public class ServerConfigEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
-    @Column(nullable = false)
     private Boolean enabled = true;
     
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+    // Constructors
+    public ServerConfig() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+        this.updatedAt = LocalDateTime.now();
     }
     
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+    @Override
+    public String toString() {
+        return "ServerConfig{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", host='" + host + '\'' +
+                ", port=" + port +
+                '}';
     }
 }

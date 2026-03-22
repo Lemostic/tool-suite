@@ -1,7 +1,6 @@
 package io.github.lemostic.toolsuite.modules.devops.deploy.view.components;
 
-import io.github.lemostic.toolsuite.modules.devops.deploy.model.DeployTask;
-import io.github.lemostic.toolsuite.modules.devops.deploy.model.ServerConfig;
+import io.github.lemostic.toolsuite.modules.devops.deploy.model.ServerConfigDTO;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -12,7 +11,7 @@ import org.kordamp.ikonli.materialdesign.MaterialDesign;
 
 public class LogTab extends Tab {
     
-    private final ServerConfig server;
+    private final ServerConfigDTO server;
     private TextArea logArea;
     private ProgressBar progressBar;
     private Label statusLabel;
@@ -21,7 +20,7 @@ public class LogTab extends Tab {
     
     private volatile boolean autoScroll = true;
     
-    public LogTab(ServerConfig server) {
+    public LogTab(ServerConfigDTO server) {
         super(server.getName());
         this.server = server;
         initializeUI();
@@ -156,7 +155,7 @@ public class LogTab extends Tab {
         });
     }
     
-    public ServerConfig getServer() {
+    public ServerConfigDTO getServer() {
         return server;
     }
 }

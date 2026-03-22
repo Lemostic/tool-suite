@@ -148,7 +148,7 @@
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
-            <version>9.2.0</version>
+            <version>9.3.0</version>
         </dependency>
 
         <!-- SSH/SFTP support for deployment module -->
@@ -165,18 +165,11 @@
             <version>2.14.0</version>
         </dependency>
 
-        <!-- Jakarta Persistence API -->
+        <!-- Hibernate Core for direct database access -->
         <dependency>
-            <groupId>jakarta.persistence</groupId>
-            <artifactId>jakarta.persistence-api</artifactId>
-            <version>3.1.0</version>
-        </dependency>
-
-        <!-- Hibernate EntityManager -->
-        <dependency>
-            <groupId>org.hibernate.orm</groupId>
+            <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
-            <version>6.5.2.Final</version>
+            <version>5.6.15.Final</version>
         </dependency>
 
         <!-- H2 Database for embedded storage -->
@@ -191,19 +184,6 @@
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
             <version>5.0.1</version>
-        </dependency>
-
-        <!-- QueryDSL for type-safe queries -->
-        <dependency>
-            <groupId>com.querydsl</groupId>
-            <artifactId>querydsl-jpa</artifactId>
-            <version>5.1.0</version>
-            <classifier>jakarta</classifier>
-        </dependency>
-        <dependency>
-            <groupId>com.querydsl</groupId>
-            <artifactId>querydsl-core</artifactId>
-            <version>5.1.0</version>
         </dependency>
 
         <!-- Jakarta Activation API -->
@@ -245,14 +225,14 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.4.14</version>
+            <version>1.5.13</version>
         </dependency>
 
         <!-- Apache POI for Excel export -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>5.2.5</version>
+            <version>5.4.0</version>
         </dependency>
 
         <!-- Elasticsearch Java Client -->
@@ -330,6 +310,8 @@
                     </execution>
                 </executions>
             </plugin>
+
+
 
             <!-- Shade: 打出带依赖的 Fat JAR（附加 classifier=shaded，不替换主 artifact） -->
             <plugin>

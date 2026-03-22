@@ -6,7 +6,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class ServerConfig {
+public class ServerConfigDTO {
     private LongProperty id;
     private StringProperty name;
     private StringProperty host;
@@ -23,7 +23,7 @@ public class ServerConfig {
     private ObjectProperty<LocalDateTime> updatedAt;
     private BooleanProperty enabled;
     
-    public ServerConfig() {
+    public ServerConfigDTO() {
         this.id = new SimpleLongProperty();
         this.name = new SimpleStringProperty();
         this.host = new SimpleStringProperty();
