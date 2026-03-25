@@ -35,7 +35,6 @@ module ToolSuite {
     requires com.fasterxml.jackson.databind;
     requires org.apache.poi.poi;
     requires org.apache.poi.ooxml;
-    requires java.prefs;
 
     exports io.github.lemostic.toolsuite;
     exports io.github.lemostic.toolsuite.core;
@@ -58,10 +57,10 @@ module ToolSuite {
     opens io.github.lemostic.toolsuite.modules.search.es to javafx.fxml, javafx.base;
     
     // 开放部署模块的包给Hibernate、QueryDSL和JavaFX
-//    opens io.github.lemostic.toolsuite.modules.devops.deploy.entity to org.hibernate.orm.core, com.querydsl.jpa;
-//    opens io.github.lemostic.toolsuite.modules.devops.deploy.repository to org.hibernate.orm.core;
-//    opens io.github.lemostic.toolsuite.modules.devops.deploy.view to javafx.fxml, javafx.base;
-//    opens io.github.lemostic.toolsuite.modules.devops.deploy.view.components to javafx.fxml, javafx.base;
-//    opens io.github.lemostic.toolsuite.modules.devops.deploy.view.dialogs to javafx.fxml, javafx.base;
+    opens io.github.lemostic.toolsuite.modules.devops.deploy.entity to org.hibernate.orm.core, com.querydsl.jpa;
+    opens io.github.lemostic.toolsuite.modules.devops.deploy.repository to org.hibernate.orm.core;
+    opens io.github.lemostic.toolsuite.modules.devops.deploy.view to javafx.fxml, javafx.base;
+    opens io.github.lemostic.toolsuite.modules.devops.deploy.view.components to javafx.fxml, javafx.base;
+    opens io.github.lemostic.toolsuite.modules.devops.deploy.view.dialogs to javafx.fxml, javafx.base;
 
 }

@@ -37,3 +37,11 @@ build/
 ### Mac OS ###
 .DS_Store
 /.idea/dataSources/
+/.idea/.gitignore
+/.idea/AugmentWebviewStateStore.xml
+/.idea/dataSources.local.xml
+/.idea/dataSources.xml
+/.idea/encodings.xml
+/.idea/misc.xml
+/.idea/uiDesigner.xml
+/.idea/vcs.xml
