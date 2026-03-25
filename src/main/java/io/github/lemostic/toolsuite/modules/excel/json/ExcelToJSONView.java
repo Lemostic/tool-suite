@@ -37,6 +37,7 @@ public class ExcelToJSONView extends BorderPane {
     private ComboBox<String> sheetSelector;
     private CheckBox headerRowCheck;
     private CheckBox formatJsonCheck;
+    private TextField wrapperKeyField;
     
     private File selectedExcelFile;
 
@@ -145,10 +146,19 @@ public class ExcelToJSONView extends BorderPane {
         formatJsonCheck.setSelected(true);
         formatJsonCheck.setTooltip(new Tooltip("勾选此项将美化输出的JSON格式"));
         
+        // Wrapper key option
+        Label wrapperKeyLabel = new Label("包装键名:");
+        wrapperKeyLabel.setStyle("-fx-font-weight: bold;");
+        wrapperKeyField = new TextField("row"); // 默认值为"row"
+        wrapperKeyField.setPrefWidth(150);
+        wrapperKeyField.setTooltip(new Tooltip("指定用于包装每行数据的JSON对象的键名，留空则不包装"));
+        
         grid.add(sheetLabel, 0, 0);
         grid.add(sheetSelector, 1, 0);
         grid.add(headerRowCheck, 2, 0);
         grid.add(formatJsonCheck, 3, 0);
+        grid.add(wrapperKeyLabel, 0, 1);
+        grid.add(wrapperKeyField, 1, 1);
         
         card.getChildren().add(grid);
         
@@ -316,7 +326,8 @@ public class ExcelToJSONView extends BorderPane {
                     selectedExcelFile, 
                     selectedSheet, 
                     headerRowCheck.isSelected(),
-                    formatJsonCheck.isSelected()
+                    formatJsonCheck.isSelected(),
+                    wrapperKeyField.getText().trim()
                 );
                 
                 Platform.runLater(() -> {

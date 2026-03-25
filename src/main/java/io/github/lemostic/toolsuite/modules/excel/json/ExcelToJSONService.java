@@ -64,8 +64,9 @@ public class ExcelToJSONService {
     
     /**
      * 将Excel文件转换为JSON字符串
+     * @param wrapperKey 用于包装每行数据的键名，如果为空或null则不包装
      */
-    public String convertExcelToJSON(File excelFile, String sheetName, boolean hasHeaderRow, boolean formatJson) throws Exception {
+    public String convertExcelToJSON(File excelFile, String sheetName, boolean hasHeaderRow, boolean formatJson, String wrapperKey) throws Exception {
         statusMessage.set("开始转换Excel到JSON...");
         progress.set(0);
         
@@ -129,7 +130,14 @@ public class ExcelToJSONService {
                     }
                 }
                 
-                jsonList.add(rowMap);
+                // 如果指定了包装键名，则将每行数据包装在一个对象中
+                if (wrapperKey != null && !wrapperKey.trim().isEmpty()) {
+                    Map<String, Object> wrappedMap = new HashMap<>();
+                    wrappedMap.put(wrapperKey.trim(), rowMap);
+                    jsonList.add(wrappedMap);
+                } else {
+                    jsonList.add(rowMap);
+                }
                 
                 // 更新进度（仅在处理大量数据时才更新，避免频繁更新UI影响性能）
                 if (totalRows > 100 && (rowIndex - startRow) % Math.max(1, totalRows / 50) == 0) {
