@@ -1,91 +1,215 @@
 package io.github.lemostic.toolsuite.core.spi;
 
 import com.dlsc.workbenchfx.model.WorkbenchModule;
+import io.github.lemostic.toolsuite.core.module.ModuleCategory;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
-/**
- * 工具模块提供者接口（SPI）
- * 
- * 外部插件需要实现此接口，并通过 SPI 机制注册
- * 
- * 使用方式：
- * 1. 在独立的 JAR 项目中实现此接口
- * 2. 在 META-INF/services 目录下创建文件：
- *    io.github.lemostic.toolsuite.core.spi.ToolModuleProvider
- * 3. 文件内容为实现类的全限定名
- * 4. 将 JAR 放入 classpath，模块会自动被加载
- * 
- * 示例：
- * <pre>
- * {@code
- * public class MyPluginProvider implements ToolModuleProvider {
- *     @Override
- *     public List<Class<? extends WorkbenchModule>> getModuleClasses() {
- *         return Arrays.asList(
- *             MyCustomModule1.class,
- *             MyCustomModule2.class
- *         );
- *     }
- *     
- *     @Override
- *     public String getProviderName() {
- *         return "我的插件包";
- *     }
- *     
- *     @Override
- *     public String getVersion() {
- *         return "1.0.0";
- *     }
- * }
- * }
- * </pre>
- */
 public interface ToolModuleProvider {
     
-    /**
-     * 获取此提供者提供的所有模块类
-     * @return 模块类列表
-     */
-    List<Class<? extends WorkbenchModule>> getModuleClasses();
+    default List<Class<? extends WorkbenchModule>> getModuleClasses() {
+        return List.of();
+    }
     
-    /**
-     * 获取提供者名称
-     * @return 提供者名称
-     */
     default String getProviderName() {
         return "Unknown Provider";
     }
     
-    /**
-     * 获取提供者版本
-     * @return 版本号
-     */
     default String getVersion() {
         return "1.0.0";
     }
     
-    /**
-     * 获取提供者描述
-     * @return 描述信息
-     */
     default String getDescription() {
         return "";
     }
     
-    /**
-     * 提供者初始化回调
-     * 在模块加载前调用，可用于初始化资源
-     */
-    default void initialize() {
-        // 默认不做任何操作
+    default int getPriority() {
+        return 100;
     }
     
-    /**
-     * 提供者销毁回调
-     * 在应用关闭时调用，可用于清理资源
-     */
-    default void destroy() {
-        // 默认不做任何操作
+    default boolean isEnabled() {
+        return true;
+    }
+    
+    default void initialize() {}
+    
+    default void destroy() {}
+    
+    class ModuleDescriptor {
+        private final Class<? extends WorkbenchModule> moduleClass;
+        private final String name;
+        private final ModuleCategory category;
+        private final String menuGroup;
+        private final int menuGroupOrder;
+        private final String description;
+        private final String version;
+        private final String author;
+        private final boolean enabled;
+        private final int priority;
+        private final Map<String, String> metadata;
+        private final Supplier<WorkbenchModule> moduleFactory;
+
+        public ModuleDescriptor(
+                Class<? extends WorkbenchModule> moduleClass,
+                String name,
+                ModuleCategory category,
+                String menuGroup,
+                int menuGroupOrder,
+                String description,
+                String version,
+                String author,
+                boolean enabled,
+                int priority,
+                Map<String, String> metadata,
+                Supplier<WorkbenchModule> moduleFactory) {
+            this.moduleClass = moduleClass;
+            this.name = name;
+            this.category = category;
+            this.menuGroup = menuGroup;
+            this.menuGroupOrder = menuGroupOrder;
+            this.description = description;
+            this.version = version;
+            this.author = author;
+            this.enabled = enabled;
+            this.priority = priority;
+            this.metadata = metadata;
+            this.moduleFactory = moduleFactory;
+        }
+
+        public Class<? extends WorkbenchModule> getModuleClass() {
+            return moduleClass;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public ModuleCategory getCategory() {
+            return category;
+        }
+
+        public String getMenuGroup() {
+            return menuGroup;
+        }
+
+        public int getMenuGroupOrder() {
+            return menuGroupOrder;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        public String getAuthor() {
+            return author;
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public int getPriority() {
+            return priority;
+        }
+
+        public Map<String, String> getMetadata() {
+            return metadata;
+        }
+
+        public WorkbenchModule createModule() {
+            return moduleFactory != null ? moduleFactory.get() : null;
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public static class Builder {
+            private Class<? extends WorkbenchModule> moduleClass;
+            private String name = "";
+            private ModuleCategory category = ModuleCategory.OTHERS;
+            private String menuGroup = "";
+            private int menuGroupOrder = 100;
+            private String description = "";
+            private String version = "1.0.0";
+            private String author = "";
+            private boolean enabled = true;
+            private int priority = 100;
+            private Map<String, String> metadata = Map.of();
+            private Supplier<WorkbenchModule> moduleFactory;
+
+            public Builder moduleClass(Class<? extends WorkbenchModule> moduleClass) {
+                this.moduleClass = moduleClass;
+                return this;
+            }
+
+            public Builder name(String name) {
+                this.name = name;
+                return this;
+            }
+
+            public Builder category(ModuleCategory category) {
+                this.category = category;
+                return this;
+            }
+
+            public Builder menuGroup(String menuGroup) {
+                this.menuGroup = menuGroup;
+                return this;
+            }
+
+            public Builder menuGroupOrder(int menuGroupOrder) {
+                this.menuGroupOrder = menuGroupOrder;
+                return this;
+            }
+
+            public Builder description(String description) {
+                this.description = description;
+                return this;
+            }
+
+            public Builder version(String version) {
+                this.version = version;
+                return this;
+            }
+
+            public Builder author(String author) {
+                this.author = author;
+                return this;
+            }
+
+            public Builder enabled(boolean enabled) {
+                this.enabled = enabled;
+                return this;
+            }
+
+            public Builder priority(int priority) {
+                this.priority = priority;
+                return this;
+            }
+
+            public Builder metadata(Map<String, String> metadata) {
+                this.metadata = metadata;
+                return this;
+            }
+
+            public Builder moduleFactory(Supplier<WorkbenchModule> factory) {
+                this.moduleFactory = factory;
+                return this;
+            }
+
+            public ModuleDescriptor build() {
+                return new ModuleDescriptor(
+                    moduleClass, name, category, menuGroup, menuGroupOrder,
+                    description, version, author, enabled, priority, metadata, moduleFactory
+                );
+            }
+        }
     }
 }

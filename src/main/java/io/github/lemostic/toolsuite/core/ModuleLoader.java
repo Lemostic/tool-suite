@@ -49,17 +49,10 @@ public class ModuleLoader {
         
         // ==================== 数据处理类 ====================
         ModuleRegistry.register(io.github.lemostic.toolsuite.modules.excel.json.ExcelToJSONModule.class);
-        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.convert.xmljson.XmlJsonConverterModule.class);
-        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.devops.jenkinsdownloader.JenkinsDownloaderModule.class);
         
-        // ==================== 运维工具类 ====================
-        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.devops.logviewer.LogViewerModule.class);
-        //ModuleRegistry.register(io.github.lemostic.toolsuite.modules.devops.deploy.DeployModule.class);
-        
-        // ==================== 网络工具类 ====================
-        // 未来添加：
-        // ModuleRegistry.register(io.github.lemostic.toolsuite.modules.network.HttpClientModule.class);
-        
+        // ==================== 二维码生成 ====================
+        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.qrcode.QRCodeModule.class);
+
         logger.info("内置模块注册完成，共注册 {} 个模块", ModuleRegistry.getRegisteredModules().size());
     }
     
