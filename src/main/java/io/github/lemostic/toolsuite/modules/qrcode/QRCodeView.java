@@ -5,27 +5,39 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
 public class QRCodeView extends BorderPane {
 
-    private static final int DEFAULT_QR_SIZE = 400;
+    private static final int DEFAULT_QR_SIZE = 300;
 
     private final TextArea inputArea = new TextArea();
     private final ImageView qrImageView = new ImageView();
-    private final Slider sizeSlider = new Slider(100, 600, DEFAULT_QR_SIZE);
-    private final Label sizeLabel = new Label("400x400");
+    private final Slider sizeSlider = new Slider(100, 500, DEFAULT_QR_SIZE);
+    private final Label sizeLabel = new Label("300x300");
     private final ColorPicker fgColorPicker = new ColorPicker(Color.BLACK);
     private final ColorPicker bgColorPicker = new ColorPicker(Color.WHITE);
+    private final ChoiceBox<String> errorCorrectionChoice = new ChoiceBox<>();
+    private final CheckBox compressCheckBox = new CheckBox("压缩内容");
+    private final Label compressInfoLabel = new Label();
 
     private final QRCodeService service = new QRCodeService();
-    private String lastGeneratedText;
+
+    private static final String BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     public QRCodeView() {
         initializeUI();
@@ -34,88 +46,93 @@ public class QRCodeView extends BorderPane {
     }
 
     private void initializeUI() {
-        setPadding(new Insets(20));
-        setStyle("-fx-background-color: #f5f5f5;");
+        setStyle("-fx-background-color: #f0f2f5;");
+
+        Label titleLabel = new Label("二维码生成器");
+        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 20));
+        titleLabel.setStyle("-fx-text-fill: #1a1a2e;");
+
+        HBox topBox = new HBox(titleLabel);
+        topBox.setPadding(new Insets(15, 20, 10, 20));
+        topBox.setStyle("-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;");
+        setTop(topBox);
 
         VBox leftPanel = createInputPanel();
-        leftPanel.setPrefWidth(360);
-        leftPanel.setMinWidth(300);
+        leftPanel.setPrefWidth(380);
+        leftPanel.setMinWidth(320);
+        leftPanel.setMaxWidth(420);
+
+        ScrollPane leftScroll = new ScrollPane(leftPanel);
+        leftScroll.setFitToWidth(true);
+        leftScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        leftScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        leftScroll.setStyle("-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;");
 
         VBox rightPanel = createPreviewPanel();
 
-        Separator separator = new Separator();
-        separator.setOrientation(javafx.geometry.Orientation.VERTICAL);
+        SplitPane splitPane = new SplitPane();
+        splitPane.getItems().addAll(leftScroll, rightPanel);
+        splitPane.setDividerPosition(0, 0.42);
+        VBox.setVgrow(splitPane, Priority.ALWAYS);
 
-        HBox mainContent = new HBox(20, leftPanel, separator, rightPanel);
-        mainContent.setAlignment(Pos.CENTER);
-        mainContent.setPadding(new Insets(10));
-
-        Label titleLabel = new Label("二维码生成器");
-        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 22));
-        titleLabel.setStyle("-fx-text-fill: #2c3e50;");
-        VBox titleBox = new VBox(titleLabel);
-        titleBox.setPadding(new Insets(0, 0, 15, 0));
-
-        VBox topBox = new VBox(titleBox, createToolbar());
-        topBox.setPadding(new Insets(0, 10, 10, 10));
-
-        setTop(topBox);
-        setCenter(mainContent);
-    }
-
-    private HBox createToolbar() {
-        Button btnGenerate = new Button("生成二维码");
-        btnGenerate.setStyle(
-            "-fx-background-color: #3498db; -fx-text-fill: white; " +
-            "-fx-font-weight: bold; -fx-padding: 8 25; " +
-            "-fx-background-radius: 5; -fx-cursor: hand;"
-        );
-        btnGenerate.setOnAction(e -> generateQR());
-
-        Button btnClear = new Button("清空");
-        btnClear.setStyle(
-            "-fx-background-color: #95a5a6; -fx-text-fill: white; " +
-            "-fx-padding: 8 20; -fx-background-radius: 5; -fx-cursor: hand;"
-        );
-        btnClear.setOnAction(e -> {
-            inputArea.clear();
-            qrImageView.setImage(null);
-        });
-
-        Button btnSave = new Button("保存图片");
-        btnSave.setStyle(
-            "-fx-background-color: #2ecc71; -fx-text-fill: white; " +
-            "-fx-padding: 8 20; -fx-background-radius: 5; -fx-cursor: hand;"
-        );
-        btnSave.setOnAction(e -> saveQR());
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        HBox toolbar = new HBox(10, btnGenerate, btnClear, spacer, btnSave);
-        toolbar.setAlignment(Pos.CENTER_LEFT);
-        toolbar.setPadding(new Insets(5, 0, 0, 0));
-        return toolbar;
+        VBox centerBox = new VBox(splitPane);
+        centerBox.setPadding(new Insets(10, 20, 20, 20));
+        VBox.setVgrow(splitPane, Priority.ALWAYS);
+        setCenter(centerBox);
     }
 
     private VBox createInputPanel() {
-        Label inputLabel = new Label("输入文本 / URL");
-        inputLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 14));
+        Label inputLabel = new Label("内容");
+        inputLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
 
-        inputArea.setPrefRowCount(6);
+        inputArea.setPrefRowCount(7);
         inputArea.setWrapText(true);
-        inputArea.setPromptText("在此输入要生成二维码的文本或URL...");
-        inputArea.setStyle(
-            "-fx-font-size: 13px; -fx-padding: 10; " +
-            "-fx-border-color: #ddd; -fx-border-radius: 5;"
+        inputArea.setPromptText("输入文本、链接或任意内容...");
+        inputArea.setStyle("-fx-font-size: 13px; -fx-padding: 10;");
+
+        Label formatLabel = new Label("纠错等级");
+        formatLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        formatLabel.setPadding(new Insets(15, 0, 5, 0));
+
+        errorCorrectionChoice.getItems().addAll("L (低 7%)", "M (中 15%)", "Q (较高 25%)", "H (高 30%)");
+        errorCorrectionChoice.setValue("M (中 15%)");
+        errorCorrectionChoice.setMaxWidth(Double.MAX_VALUE);
+
+        compressCheckBox.setFont(Font.font("System", FontWeight.NORMAL, 13));
+        compressCheckBox.selectedProperty().addListener((obs, old, val) -> {
+            updateCompressInfo();
+            if (val && !inputArea.getText().isBlank()) {
+                generateQR();
+            } else if (!val && !inputArea.getText().isBlank()) {
+                generateQR();
+            }
+        });
+
+        compressInfoLabel.setStyle("-fx-text-fill: #888; -fx-font-size: 11px;");
+        compressInfoLabel.setWrapText(true);
+
+        Label colorLabel = new Label("颜色");
+        colorLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        colorLabel.setPadding(new Insets(15, 0, 5, 0));
+
+        Label fgLabel = new Label("前景色:");
+        Label bgLabel = new Label("背景色:");
+
+        fgColorPicker.setValue(Color.BLACK);
+        bgColorPicker.setValue(Color.WHITE);
+
+        HBox colorBox = new HBox(15,
+            new HBox(5, fgLabel, fgColorPicker),
+            new HBox(5, bgLabel, bgColorPicker)
         );
+        colorBox.setAlignment(Pos.CENTER_LEFT);
 
-        Label settingsLabel = new Label("个性化设置");
-        settingsLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 14));
-        settingsLabel.setPadding(new Insets(15, 0, 5, 0));
+        Label sizeLabelTitle = new Label("尺寸");
+        sizeLabelTitle.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
+        sizeLabelTitle.setPadding(new Insets(15, 0, 5, 0));
 
-        sizeSlider.setShowTickLabels(true);
-        sizeSlider.setShowTickMarks(true);
+        sizeSlider.setShowTickLabels(false);
+        sizeSlider.setShowTickMarks(false);
         sizeSlider.setMajorTickUnit(100);
         sizeSlider.setBlockIncrement(50);
         sizeSlider.valueProperty().addListener((obs, old, val) -> {
@@ -123,26 +140,37 @@ public class QRCodeView extends BorderPane {
             sizeLabel.setText(v + "x" + v);
         });
 
-        Label fgLabel = new Label("前景色:");
-        Label bgLabel = new Label("背景色:");
-        HBox colorBox = new HBox(15,
-            new HBox(8, fgLabel, fgColorPicker),
-            new HBox(8, bgLabel, bgColorPicker)
-        );
-        colorBox.setAlignment(Pos.CENTER_LEFT);
+        HBox sliderBox = new HBox(10, sizeSlider, sizeLabel);
+        sliderBox.setAlignment(Pos.CENTER_LEFT);
 
-        VBox panel = new VBox(8,
+        Button btnGenerate = new Button("生成二维码");
+        btnGenerate.setStyle(
+            "-fx-background-color: #3498db; -fx-text-fill: white; " +
+            "-fx-font-weight: bold; -fx-padding: 10 30; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-size: 14px;"
+        );
+        btnGenerate.setMaxWidth(Double.MAX_VALUE);
+        btnGenerate.setOnAction(e -> generateQR());
+
+        HBox actionBox = new HBox(10, btnGenerate);
+        actionBox.setPadding(new Insets(15, 0, 0, 0));
+
+        VBox panel = new VBox(6,
             inputLabel,
             inputArea,
-            settingsLabel,
-            new Label("二维码尺寸:"),
-            new HBox(10, sizeSlider, sizeLabel),
-            colorBox
+            formatLabel,
+            errorCorrectionChoice,
+            compressCheckBox,
+            compressInfoLabel,
+            colorLabel,
+            colorBox,
+            sizeLabelTitle,
+            sliderBox,
+            actionBox
         );
-        panel.setPadding(new Insets(10));
+        panel.setPadding(new Insets(15));
         panel.setStyle(
-            "-fx-background-color: white; -fx-border-color: #e0e0e0; " +
-            "-fx-border-radius: 8; -fx-background-radius: 8;"
+            "-fx-background-color: white; -fx-border-color: #e8e8e8; " +
+            "-fx-border-radius: 10; -fx-background-radius: 10;"
         );
         return panel;
     }
@@ -154,33 +182,143 @@ public class QRCodeView extends BorderPane {
         qrImageView.setPreserveRatio(true);
         qrImageView.setSmooth(true);
 
-        StackPane imageContainer = new StackPane(qrImageView);
-        imageContainer.setMinSize(300, 300);
-        imageContainer.setPrefSize(420, 420);
-        imageContainer.setStyle(
-            "-fx-background-color: white; -fx-border-color: #e0e0e0; " +
-            "-fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10;"
-        );
+        ScrollPane imageScroll = new ScrollPane(qrImageView);
+        imageScroll.setFitToWidth(true);
+        imageScroll.setFitToHeight(true);
+        imageScroll.setStyle("-fx-background: transparent; -fx-background-color: transparent; -fx-border-color: transparent;");
+        imageScroll.setPannable(true);
 
-        VBox panel = new VBox(12, previewLabel, imageContainer);
-        panel.setPadding(new Insets(10));
-        panel.setAlignment(Pos.TOP_CENTER);
+        BorderPane imageContainer = new BorderPane();
+        imageContainer.setCenter(imageScroll);
+        imageContainer.setMinSize(300, 300);
+
+        HBox buttonBar = new HBox(12);
+        buttonBar.setAlignment(Pos.CENTER);
+        buttonBar.setPadding(new Insets(12, 0, 0, 0));
+
+        Button btnSave = new Button("保存图片");
+        btnSave.setStyle(
+            "-fx-background-color: #2ecc71; -fx-text-fill: white; " +
+            "-fx-padding: 8 25; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-weight: bold;"
+        );
+        btnSave.setOnAction(e -> saveQR());
+
+        Button btnClear = new Button("清空");
+        btnClear.setStyle(
+            "-fx-background-color: #e74c3c; -fx-text-fill: white; " +
+            "-fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand; -fx-font-weight: bold;"
+        );
+        btnClear.setOnAction(e -> {
+            inputArea.clear();
+            qrImageView.setImage(null);
+        });
+
+        buttonBar.getChildren().addAll(btnSave, btnClear);
+
+        VBox panel = new VBox(10, previewLabel, imageContainer, buttonBar);
+        panel.setPadding(new Insets(15));
+        panel.setStyle(
+            "-fx-background-color: white; -fx-border-color: #e8e8e8; " +
+            "-fx-border-radius: 10; -fx-background-radius: 10;"
+        );
+        VBox.setVgrow(imageContainer, Priority.ALWAYS);
         return panel;
+    }
+
+    private void updateCompressInfo() {
+        if (!compressCheckBox.isSelected()) {
+            compressInfoLabel.setText("");
+            return;
+        }
+        String text = inputArea.getText();
+        if (text == null || text.isBlank()) {
+            compressInfoLabel.setText("输入内容后将自动压缩");
+            return;
+        }
+        try {
+            byte[] original = text.getBytes("UTF-8");
+            byte[] compressed = compress(original);
+            double ratio = (double) compressed.length / original.length * 100;
+            compressInfoLabel.setText(String.format("原始: %d bytes → 压缩: %d bytes (%.1f%%)",
+                original.length, compressed.length, ratio));
+        } catch (Exception e) {
+            compressInfoLabel.setText("");
+        }
+    }
+
+    public static String encodeToBase64(byte[] data) {
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        while (i < data.length) {
+            int b0 = data[i++] & 0xFF;
+            int b1 = (i < data.length) ? data[i++] & 0xFF : -1;
+            int b2 = (i < data.length) ? data[i++] & 0xFF : -1;
+
+            sb.append(BASE64_CHARS.charAt(b0 >> 2));
+
+            if (b1 == -1) {
+                sb.append(BASE64_CHARS.charAt((b0 & 0x03) << 4));
+                sb.append("==");
+            } else {
+                sb.append(BASE64_CHARS.charAt(((b0 & 0x03) << 4) | (b1 >> 4)));
+                if (b2 == -1) {
+                    sb.append(BASE64_CHARS.charAt((b1 & 0x0F) << 2));
+                    sb.append("=");
+                } else {
+                    sb.append(BASE64_CHARS.charAt(((b1 & 0x0F) << 2) | (b2 >> 6)));
+                    sb.append(BASE64_CHARS.charAt(b2 & 0x3F));
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    private byte[] compress(byte[] data) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION, true);
+        try (DeflaterOutputStream dos = new DeflaterOutputStream(baos, deflater)) {
+            dos.write(data);
+        }
+        return baos.toByteArray();
     }
 
     private void generateQR() {
         String text = inputArea.getText();
         if (text == null || text.isBlank()) {
-            showAlert("请输入文本或URL");
+            showAlert("请输入内容");
             return;
         }
 
-        lastGeneratedText = text;
+        String qrContent = text;
+
+        if (compressCheckBox.isSelected()) {
+            try {
+                byte[] original = text.getBytes("UTF-8");
+                byte[] compressed = compress(original);
+                if (compressed.length < original.length) {
+                    String prefix = "C1:";
+                    qrContent = prefix + encodeToBase64(compressed);
+                    updateCompressInfo();
+                } else {
+                    compressInfoLabel.setText("压缩后未减小，使用原始内容");
+                }
+            } catch (Exception e) {
+                compressInfoLabel.setText("压缩失败: " + e.getMessage());
+            }
+        }
+
         int size = (int) sizeSlider.getValue();
         Color fg = fgColorPicker.getValue();
         Color bg = bgColorPicker.getValue();
 
-        Image qrImage = service.generateQRCode(text, size, fg, bg);
+        String eccValue = errorCorrectionChoice.getValue();
+        com.google.zxing.qrcode.decoder.ErrorCorrectionLevel ecc;
+        if (eccValue.startsWith("L")) ecc = com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.L;
+        else if (eccValue.startsWith("Q")) ecc = com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.Q;
+        else if (eccValue.startsWith("H")) ecc = com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.H;
+        else ecc = com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.M;
+
+        Image qrImage = service.generateQRCode(qrContent, size, fg, bg, ecc);
         qrImageView.setImage(qrImage);
     }
 
@@ -193,22 +331,21 @@ public class QRCodeView extends BorderPane {
 
         try {
             File dir = new File(System.getProperty("user.home"), "Desktop");
+            if (!dir.exists()) dir = new File(System.getProperty("user.home"));
             File file = new File(dir, "QRCode_" + System.currentTimeMillis() + ".png");
 
-            java.awt.image.BufferedImage bImg = new java.awt.image.BufferedImage(
-                (int) image.getWidth(), (int) image.getHeight(),
-                java.awt.image.BufferedImage.TYPE_INT_ARGB
-            );
-
-            javafx.scene.image.PixelReader reader = image.getPixelReader();
-            for (int y = 0; y < image.getHeight(); y++) {
-                for (int x = 0; x < image.getWidth(); x++) {
+            int w = (int) image.getWidth();
+            int h = (int) image.getHeight();
+            BufferedImage bImg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            PixelReader reader = image.getPixelReader();
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
                     bImg.setRGB(x, y, reader.getArgb(x, y));
                 }
             }
 
-            javax.imageio.ImageIO.write(bImg, "png", file);
-            showInfo("已保存至: " + file.getAbsolutePath());
+            ImageIO.write(bImg, "png", file);
+            showInfo("已保存: " + file.getAbsolutePath());
         } catch (Exception e) {
             showAlert("保存失败: " + e.getMessage());
         }

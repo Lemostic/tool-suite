@@ -21,10 +21,15 @@ public class QRCodeService {
     private static final int DEFAULT_SIZE = 400;
 
     public Image generateQRCode(String text, int size, Color foreground, Color background) {
+        return generateQRCode(text, size, foreground, background, ErrorCorrectionLevel.M);
+    }
+
+    public Image generateQRCode(String text, int size, Color foreground, Color background,
+                                ErrorCorrectionLevel ecc) {
         int qrSize = size <= 0 ? DEFAULT_SIZE : size;
 
         Map<EncodeHintType, Object> hints = new HashMap<>();
-        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
+        hints.put(EncodeHintType.ERROR_CORRECTION, ecc);
         hints.put(EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8.name());
         hints.put(EncodeHintType.MARGIN, 2);
 
