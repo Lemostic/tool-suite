@@ -4,6 +4,7 @@ import com.dlsc.workbenchfx.model.WorkbenchModule;
 import io.github.lemostic.toolsuite.core.spi.ToolModuleProvider;
 import io.github.lemostic.toolsuite.modules.excel.json.ExcelToJSONModule;
 import io.github.lemostic.toolsuite.modules.helloworld.HelloWorldModule;
+import io.github.lemostic.toolsuite.modules.qrcode.QRCodeModule;
 import io.github.lemostic.toolsuite.modules.search.es.EsQueryModule;
 
 import java.util.Arrays;
@@ -22,7 +23,8 @@ public class BuiltinDevToolsProvider implements ToolModuleProvider {
         return Arrays.asList(
             HelloWorldModule.class,
             EsQueryModule.class,
-            ExcelToJSONModule.class
+            ExcelToJSONModule.class,
+            QRCodeModule.class
             // 未来可以添加更多开发工具模块
             // JsonFormatterModule.class,
             // Base64EncoderModule.class,

@@ -24,14 +24,21 @@ module ToolSuite {
     requires com.zaxxer.hikari;
     requires jsch;
     requires com.h2database;
+    requires jakarta.persistence;
     requires jakarta.xml.bind;
-    requires org.hibernate.orm.core;
-
+    // 临时注释：模块 com.querydsl.core/jpa 在父 POM module-path 中未包含
+    // requires com.querydsl.core;
+    // requires com.querydsl.jpa;
+    
     // ES查询模块相关
     requires java.net.http;
     requires com.fasterxml.jackson.databind;
     requires org.apache.poi.poi;
     requires org.apache.poi.ooxml;
+    requires java.prefs;
+
+    // 二维码生成
+    requires com.google.zxing;
     requires java.prefs;
 
     exports io.github.lemostic.toolsuite;
@@ -53,14 +60,6 @@ module ToolSuite {
     opens io.github.lemostic.toolsuite.modules.helloworld to javafx.fxml;
     opens io.github.lemostic.toolsuite.modules.file.zipclean to javafx.fxml, javafx.base;
     opens io.github.lemostic.toolsuite.modules.search.es to javafx.fxml, javafx.base;
-    
-    // 开放部署模块的包给Hibernate、QueryDSL和JavaFX
-    opens io.github.lemostic.toolsuite.modules.devops.deploy.entity to org.hibernate.orm.core, com.querydsl.jpa;
-    opens io.github.lemostic.toolsuite.modules.devops.deploy.repository to org.hibernate.orm.core;
-    opens io.github.lemostic.toolsuite.modules.devops.deploy.view to javafx.fxml, javafx.base;
-    opens io.github.lemostic.toolsuite.modules.devops.deploy.view.components to javafx.fxml, javafx.base;
-    opens io.github.lemostic.toolsuite.modules.devops.deploy.view.dialogs to javafx.fxml, javafx.base;
-
-    opens io.github.lemostic.toolsuite.modules.excel.transpose to javafx.fxml, javafx.base;
+    opens io.github.lemostic.toolsuite.modules.qrcode to javafx.fxml, javafx.base;
 
 }
