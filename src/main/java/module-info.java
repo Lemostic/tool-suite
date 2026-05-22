@@ -24,7 +24,6 @@ module ToolSuite {
     requires com.zaxxer.hikari;
     requires jsch;
     requires com.h2database;
-    requires jakarta.persistence;
     requires jakarta.xml.bind;
     // 临时注释：模块 com.querydsl.core/jpa 在父 POM module-path 中未包含
     // requires com.querydsl.core;
@@ -39,7 +38,6 @@ module ToolSuite {
 
     // 二维码生成
     requires com.google.zxing;
-    requires java.prefs;
 
     exports io.github.lemostic.toolsuite;
     exports io.github.lemostic.toolsuite.core;
@@ -61,5 +59,6 @@ module ToolSuite {
     opens io.github.lemostic.toolsuite.modules.file.zipclean to javafx.fxml, javafx.base;
     opens io.github.lemostic.toolsuite.modules.search.es to javafx.fxml, javafx.base;
     opens io.github.lemostic.toolsuite.modules.qrcode to javafx.fxml, javafx.base;
+    opens io.github.lemostic.toolsuite.modules.convert.markitdown to javafx.fxml, javafx.base;
 
 }

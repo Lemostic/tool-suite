@@ -50,6 +50,9 @@ public class ModuleLoader {
         // ==================== 数据处理类 ====================
         ModuleRegistry.register(io.github.lemostic.toolsuite.modules.excel.json.ExcelToJSONModule.class);
         
+        // ==================== 文档转换 ====================
+        ModuleRegistry.register(io.github.lemostic.toolsuite.modules.convert.markitdown.MarkitdownModule.class);
+        
         // ==================== 二维码生成 ====================
         ModuleRegistry.register(io.github.lemostic.toolsuite.modules.qrcode.QRCodeModule.class);
 

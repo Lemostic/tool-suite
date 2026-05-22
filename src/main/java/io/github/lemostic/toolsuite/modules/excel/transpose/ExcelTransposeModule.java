@@ -20,7 +20,7 @@ import org.kordamp.ikonli.materialdesign.MaterialDesign;
 public class ExcelTransposeModule extends WorkbenchModule {
 
     public ExcelTransposeModule() {
-        super("Excel行列转置", MaterialDesign.MDI_TRANSPOSE);
+        super("Excel行列转置", MaterialDesign.MDI_SWAP_HORIZONTAL);
     }
 
     @Override

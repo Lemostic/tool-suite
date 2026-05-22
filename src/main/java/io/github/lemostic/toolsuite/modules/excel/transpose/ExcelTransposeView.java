@@ -13,6 +13,7 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
+import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
@@ -73,13 +74,13 @@ public class ExcelTransposeView extends BorderPane {
         
         HBox fileBox = new HBox(10);
         fileBox.setAlignment(Pos.CENTER_LEFT);
-        Label fileIcon = new FontIcon(MaterialDesign.MDI_FILE_EXCEL);
-        ((FontIcon) fileIcon).setIconSize(20);
-        ((FontIcon) fileIcon).setStyle("-fx-icon-color: #4CAF50;");
+        FontIcon fileIcon = new FontIcon(MaterialDesign.MDI_FILE_EXCEL);
+        fileIcon.setIconSize(20);
+        fileIcon.setStyle("-fx-icon-color: #4CAF50;");
         Label fileLabel = new Label("文件:");
         fileLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;");
         
-        browseBtn = new Button("选择文件", new FontIcon(MaterialDesign.MDI_FOLDER_OPEN));
+        browseBtn = new Button("选择文件", new FontIcon(MaterialDesign.MDI_FOLDER));
         browseBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 6 12;");
         browseBtn.setOnAction(e -> selectFile());
         
@@ -139,7 +140,7 @@ public class ExcelTransposeView extends BorderPane {
         Separator sep3 = new Separator();
         sep3.setOrientation(javafx.geometry.Orientation.VERTICAL);
         
-        transposeToggle = new ToggleButton("行→列", new FontIcon(MaterialDesign.MDI_TRANSPOSE));
+        transposeToggle = new ToggleButton("行→列", new FontIcon(MaterialDesign.MDI_SWAP_HORIZONTAL));
         transposeToggle.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 6 12;");
         transposeToggle.setDisable(true);
         transposeToggle.setOnAction(e -> {
@@ -151,7 +152,7 @@ public class ExcelTransposeView extends BorderPane {
             applyTranspose();
         });
         
-        loadBtn = new Button("加载数据", new FontIcon(MaterialDesign.MDI_DATABASE_IMPORT));
+        loadBtn = new Button("加载数据", new FontIcon(MaterialDesign.MDI_DATABASE_PLUS));
         loadBtn.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 6 12;");
         loadBtn.setDisable(true);
         loadBtn.setOnAction(e -> loadCurrentSheet());
@@ -199,7 +200,7 @@ public class ExcelTransposeView extends BorderPane {
             if (e.getButton() == MouseButton.SECONDARY) {
                 var cell = (TableCell<?, ?>) e.getTarget();
                 if (cell != null && cell.getTableColumn() != null) {
-                    int colIndex = cell.getTableColumn().getIndex();
+                    int colIndex = dataTable.getColumns().indexOf(cell.getTableColumn());
                     selectedColumnIndex = colIndex;
                     showColumnContextMenu(e, colIndex);
                 }
@@ -223,7 +224,7 @@ public class ExcelTransposeView extends BorderPane {
     }
 
     private VBox createColumnCopyPanel() {
-        VBox panel = createCard("列拼接工具", MaterialDesign.MDI_TEXT_BOX);
+        VBox panel = createCard("列拼接工具", MaterialDesign.MDI_TEXTBOX);
         panel.setPrefWidth(320);
         panel.setMinWidth(320);
         panel.setPadding(new Insets(15));
@@ -315,10 +316,10 @@ public class ExcelTransposeView extends BorderPane {
         statusBar.setStyle("-fx-background-color: white; " +
                           "-fx-border-color: #e0e0e0; " +
                           "-fx-border-width: 1 0 0 0;");
-        
-        Label statusIcon = new FontIcon(MaterialDesign.MDI_INFORMATION_OUTLINE);
-        ((FontIcon) statusIcon).setIconSize(14);
-        ((FontIcon) statusIcon).setStyle("-fx-icon-color: #666;");
+
+        FontIcon statusIcon = new FontIcon(MaterialDesign.MDI_INFORMATION_OUTLINE);
+        statusIcon.setIconSize(14);
+        statusIcon.setStyle("-fx-icon-color: #666;");
         
         Label statusLabel = new Label("就绪");
         statusLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 12px;");
